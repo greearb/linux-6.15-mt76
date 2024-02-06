@@ -1604,7 +1604,7 @@ static int ieee80211_change_beacon(struct wiphy *wiphy, struct net_device *dev,
 	return 0;
 }
 
-static void ieee80211_free_next_beacon(struct ieee80211_link_data *link)
+void ieee80211_free_next_beacon(struct ieee80211_link_data *link)
 {
 	if (!link->u.ap.next_beacon)
 		return;
@@ -3797,6 +3797,79 @@ static int ieee80211_set_after_csa_beacon(struct ieee80211_link_data *link_data,
 	return 0;
 }
 
+static int ieee80211_start_radar_detection_post_csa(struct wiphy *wiphy,
+						    struct net_device *dev,
+						    unsigned int link_id,
+						    struct cfg80211_chan_def *chandef,
+						    u32 cac_time_ms)
+{
+	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
+	struct ieee80211_local *local = sdata->local;
+	struct ieee80211_link_data *link;
+
+	if (ieee80211_scanning_busy(local, chandef))
+		return -EBUSY;
+
+	link = sdata_dereference(sdata->link[link_id], sdata);
+	if (!link)
+		return -ENOLINK;
+
+	/* whatever, but channel contexts should not complain about that one */
+	link->smps_mode = IEEE80211_SMPS_OFF;
+	link->needed_rx_chains = local->rx_chains;
+
+	if (hweight16(sdata->vif.valid_links) <= 1)
+		sta_info_flush(sdata, -1);
+
+	/* disable beacon during CAC period */
+	link->conf->enable_beacon = false;
+	ieee80211_link_info_change_notify(sdata, link, BSS_CHANGED_BEACON_ENABLED);
+
+	wiphy_delayed_work_queue(wiphy, &link->dfs_cac_timer_work,
+				 msecs_to_jiffies(cac_time_ms));
+
+	return 1;
+}
+
+static void ieee80211_csa_send_deauth(struct ieee80211_link_data *link_data)
+{
+	struct ieee80211_sub_if_data *sdata = link_data->sdata;
+	struct ieee80211_local *local = sdata->local;
+	u8 frame_buf[IEEE80211_DEAUTH_FRAME_LEN];
+	u8 broadcast[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+	bool send_deauth;
+
+	send_deauth = !cfg80211_chandef_identical(&link_data->conf->chanreq.oper,
+						  &link_data->csa.chanreq.oper) &&
+		      !cfg80211_reg_can_beacon_relax(local->hw.wiphy,
+						     &link_data->csa.chanreq.oper,
+						     sdata->wdev.iftype) &&
+		      hweight16(sdata->vif.valid_links) <= 1 &&
+		      !ieee80211_is_cert_mode(&local->hw);
+	/* broadcast deauth frame if CAC is required for non MLD or single link MLD AP */
+	if (!send_deauth)
+		return;
+
+	if (test_bit(IEEE80211_QUEUE_STOP_REASON_CSA,
+		     &local->queue_stop_reasons[0])) {
+		ieee80211_wake_vif_queues_norefcount(local, sdata,
+						     IEEE80211_QUEUE_STOP_REASON_CSA);
+		ieee80211_send_deauth_disassoc(sdata, broadcast,
+					       link_data->conf->bssid,
+					       IEEE80211_STYPE_DEAUTH,
+					       WLAN_REASON_DEAUTH_LEAVING,
+					       send_deauth, frame_buf);
+		ieee80211_stop_vif_queues_norefcount(local, sdata,
+					       IEEE80211_QUEUE_STOP_REASON_CSA);
+		return;
+	}
+
+	ieee80211_send_deauth_disassoc(sdata, broadcast,
+				       link_data->conf->bssid, IEEE80211_STYPE_DEAUTH,
+				       WLAN_REASON_DEAUTH_LEAVING,
+				       send_deauth, frame_buf);
+}
+
 static int __ieee80211_csa_finalize(struct ieee80211_link_data *link_data)
 {
 	struct ieee80211_sub_if_data *sdata = link_data->sdata;
@@ -3806,6 +3879,8 @@ static int __ieee80211_csa_finalize(struct ieee80211_link_data *link_data)
 	int err;
 
 	lockdep_assert_wiphy(local->hw.wiphy);
+
+	ieee80211_csa_send_deauth(link_data);
 
 	/*
 	 * using reservation isn't immediate as it may be deferred until later
@@ -3829,6 +3904,12 @@ static int __ieee80211_csa_finalize(struct ieee80211_link_data *link_data)
 	if (!cfg80211_chandef_identical(&link_conf->chanreq.oper,
 					&link_data->csa.chanreq.oper))
 		return -EINVAL;
+
+	err = cfg80211_start_radar_detection_post_csa(local->hw.wiphy, &sdata->wdev,
+						      link_data->link_id,
+						      &link_conf->chanreq.oper);
+	if (err)
+		return err > 0 ? 0 : err;
 
 	link_conf->csa_active = false;
 
@@ -4048,9 +4129,6 @@ __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 	if (!list_empty(&local->roc_list) || local->scanning)
 		return -EBUSY;
 
-	if (sdata->wdev.links[link_id].cac_started)
-		return -EBUSY;
-
 	if (WARN_ON(link_id >= IEEE80211_MLD_MAX_NUM_LINKS))
 		return -EINVAL;
 
@@ -4062,10 +4140,6 @@ __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 
 	if (chanreq.oper.punctured && !link_conf->eht_support)
 		return -EINVAL;
-
-	/* don't allow another channel switch if one is already active. */
-	if (link_conf->csa_active)
-		return -EBUSY;
 
 	conf = wiphy_dereference(wiphy, link_conf->chanctx_conf);
 	if (!conf) {
@@ -4080,6 +4154,15 @@ __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 	}
 
 	chanctx = container_of(conf, struct ieee80211_chanctx, conf);
+
+	/* don't allow another channel switch if one is already active
+	 * except the case of post-CSA radar detection.
+	 */
+	if (link_conf->csa_active) {
+		if (!sdata->wdev.links[link_id].cac_started)
+			return -EBUSY;
+		ieee80211_dfs_cac_cancel(local, chanctx);
+	}
 
 	ch_switch.timestamp = 0;
 	ch_switch.device_timestamp = 0;
@@ -5245,8 +5328,15 @@ ieee80211_skip_cac(struct wireless_dev *wdev, unsigned int link_id)
 
 	wiphy_delayed_work_cancel(sdata->local->hw.wiphy,
 				  &link->dfs_cac_timer_work);
-	if (wdev->cac_links & BIT(link_id)) {
-		ieee80211_link_release_channel(link);
+	if (wdev->links[link_id].cac_started) {
+		if (link->conf->csa_active) {
+			/* beacon is disabled during CAC period */
+			link->conf->enable_beacon = true;
+			wiphy_work_queue(sdata->local->hw.wiphy,
+					 &link->csa.finalize_work);
+		} else {
+			ieee80211_link_release_channel(link);
+		}
 		cac_time_ms = wdev->links[link_id].cac_time_ms;
 		wdev->links[link_id].cac_start_time = jiffies -
 						      msecs_to_jiffies(cac_time_ms + 1);
@@ -5338,6 +5428,7 @@ const struct cfg80211_ops mac80211_config_ops = {
 #endif
 	.get_channel = ieee80211_cfg_get_channel,
 	.start_radar_detection = ieee80211_start_radar_detection,
+	.start_radar_detection_post_csa = ieee80211_start_radar_detection_post_csa,
 	.end_cac = ieee80211_end_cac,
 	.channel_switch = ieee80211_channel_switch,
 	.set_qos_map = ieee80211_set_qos_map,
