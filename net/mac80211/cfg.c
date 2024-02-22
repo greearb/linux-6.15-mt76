@@ -3080,10 +3080,13 @@ static int ieee80211_set_wiphy_params(struct wiphy *wiphy, u32 changed)
 
 static int ieee80211_set_tx_power(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
+				  unsigned int link_id,
 				  enum nl80211_tx_power_setting type, int mbm)
 {
 	struct ieee80211_local *local = wiphy_priv(wiphy);
 	struct ieee80211_sub_if_data *sdata;
+	struct ieee80211_link_data *link;
+	struct ieee80211_bss_conf *link_conf;
 	enum nl80211_tx_power_setting txp_type = type;
 	bool update_txp_type = false;
 	bool has_monitor = false;
@@ -3109,6 +3112,11 @@ static int ieee80211_set_tx_power(struct wiphy *wiphy,
 
 	if (wdev) {
 		sdata = IEEE80211_WDEV_TO_SUB_IF(wdev);
+		link = sdata_dereference(sdata->link[link_id], sdata);
+		if (!link)
+			return -ENOLINK;
+
+		link_conf = link->conf;
 
 		if (sdata->vif.type == NL80211_IFTYPE_MONITOR &&
 		    !ieee80211_hw_check(&local->hw, NO_VIRTUAL_MONITOR)) {

@@ -1637,6 +1637,7 @@ static void wilc_set_wakeup(struct wiphy *wiphy, bool enabled)
 }
 
 static int set_tx_power(struct wiphy *wiphy, struct wireless_dev *wdev,
+			unsigned int link_id,
 			enum nl80211_tx_power_setting type, int mbm)
 {
 	int ret;

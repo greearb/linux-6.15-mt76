@@ -40,6 +40,9 @@ void ieee80211_link_init(struct ieee80211_sub_if_data *sdata,
 	link->user_power_level = sdata->local->user_power_level;
 	link_conf->txpower = INT_MIN;
 
+	link->user_power_level = IEEE80211_UNSET_POWER_LEVEL;
+	link->ap_power_level = IEEE80211_UNSET_POWER_LEVEL;
+
 	wiphy_work_init(&link->csa.finalize_work,
 			ieee80211_csa_finalize_work);
 	wiphy_work_init(&link->color_change_finalize_work,
