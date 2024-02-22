@@ -1796,6 +1796,7 @@ static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 
 static int cfg80211_rtw_set_txpower(struct wiphy *wiphy,
 				    struct wireless_dev *wdev,
+				    unsigned int link_id,
 				    enum nl80211_tx_power_setting type, int mbm)
 {
 	return 0;
