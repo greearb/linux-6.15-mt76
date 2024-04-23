@@ -2251,7 +2251,7 @@ void mt7996_mac_reset_work(struct work_struct *work)
 }
 
 /* firmware coredump */
-void mt7996_mac_fw_coredump(struct mt7996_dev *dev, u8 type)
+static void mt7996_mac_fw_coredump(struct mt7996_dev *dev, u8 type)
 {
 	const struct mt7996_mem_region *mem_region;
 	struct mt7996_crash_data *crash_data;
