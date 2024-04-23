@@ -378,6 +378,7 @@ struct mt7996_vif_link {
 	struct cfg80211_bitrate_mask bitrate_mask;
 
 	u8 own_mld_id;
+	u8 bpcc;
 };
 
 struct mt7996_vif {
@@ -389,6 +390,9 @@ struct mt7996_vif {
 
 	u8 group_mld_id;
 	u8 mld_remap_id;
+
+	u8 cs_link_id;
+	u16 cs_ready_links;
 
 	/* for beacon monitoring */
 	struct delayed_work beacon_mon_work;
