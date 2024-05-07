@@ -2523,6 +2523,16 @@ void mt7996_mac_sta_rc_work(struct work_struct *work)
 			mt7996_mcu_set_fixed_field(dev, link_sta, link,
 						   msta_link, NULL,
 						   RATE_PARAM_MMPS_UPDATE);
+#ifdef CONFIG_MTK_VENDOR
+		if (changed & IEEE80211_RC_CODING_TYPE_CHANGED) {
+			struct sta_phy_uni phy = {
+				.ldpc = dev->coding_type,
+			};
+
+			mt7996_mcu_set_fixed_field(dev, link_sta, link, msta_link,
+						   &phy, RATE_PARAM_FIXED_ENCODING);
+		}
+#endif
 
 		spin_lock_bh(&dev->mt76.sta_poll_lock);
 	}
