@@ -386,6 +386,7 @@ struct mt7996_sta {
 
 	struct mt7996_vif *vif;
 	u8 sec_link;
+	u16 valid_links;
 };
 
 struct mt7996_vif_link {
@@ -1037,7 +1038,7 @@ int mt7996_mcu_add_bss_info(struct mt7996_phy *phy, struct ieee80211_vif *vif,
 			    struct ieee80211_bss_conf *link_conf,
 			    struct mt76_vif_link *mlink,
 			    struct mt7996_sta_link *msta_link, int enable);
-int mt7996_mcu_add_sta(struct mt7996_dev *dev,
+int mt7996_mcu_add_sta(struct mt7996_dev *dev, struct ieee80211_vif *vif,
 		       struct ieee80211_bss_conf *link_conf,
 		       struct ieee80211_link_sta *link_sta,
 		       struct mt7996_vif_link *link,
@@ -1052,7 +1053,8 @@ int mt7996_mcu_add_tx_ba(struct mt7996_dev *dev,
 			 struct mt7996_sta_link *msta_link, bool enable);
 int mt7996_mcu_add_rx_ba(struct mt7996_dev *dev,
 			 struct ieee80211_ampdu_params *params,
-			 struct mt7996_vif_link *link, bool enable);
+			 struct mt7996_vif_link *link,
+			 struct mt7996_sta_link *msta_link, bool enable);
 int mt7996_mcu_update_bss_color(struct mt7996_dev *dev,
 				struct mt76_vif_link *mlink,
 				struct cfg80211_he_bss_color *he_bss_color);
@@ -1141,6 +1143,11 @@ int mt7996_mcu_set_vow_drr_ctrl(struct mt7996_phy *phy,
 				enum vow_drr_ctrl_id id);
 int mt7996_mcu_set_vow_feature_ctrl(struct mt7996_phy *phy);
 void mt7996_mcu_wmm_pbc_work(struct work_struct *work);
+int mt7996_mcu_mld_reconf_stop_link(struct mt7996_dev *dev,
+				    struct ieee80211_vif *vif, u16 removed_links);
+int mt7996_mcu_mld_link_oper(struct mt7996_phy *phy,
+			     struct ieee80211_bss_conf *conf,
+			     struct mt7996_vif_link *mconf, bool add);
 
 static inline u8 mt7996_max_interface_num(struct mt7996_dev *dev)
 {
@@ -1352,6 +1359,17 @@ int mt7996_mcu_mlo_agc(struct mt7996_dev *dev, const void *data, int len);
 #ifdef CONFIG_NET_MEDIATEK_SOC_WED
 int mt7996_dma_rro_init(struct mt7996_dev *dev);
 #endif /* CONFIG_NET_MEDIATEK_SOC_WED */
+
+static inline void mt7996_set_pse_drop(struct mt7996_dev *dev, bool enable)
+{
+#ifdef CONFIG_NET_MEDIATEK_SOC_WED
+        if (!is_mt7996(&dev->mt76) || !mtk_wed_device_active(&dev->mt76.mmio.wed))
+                return;
+
+        mtk_wed_device_ppe_drop(&dev->mt76.mmio.wed, enable);
+#endif /* CONFIG_NET_MEDIATEK_SOC_WED */
+}
+
 int mt7996_mcu_set_qos_map(struct mt7996_dev *dev, struct mt7996_vif_link *mconf,
 			   struct cfg80211_qos_map *usr_qos_map);
 #endif
