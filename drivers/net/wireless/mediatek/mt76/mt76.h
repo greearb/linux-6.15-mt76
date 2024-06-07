@@ -362,7 +362,7 @@ struct mt76_sta_stats {
 	/* WED TX */
 	u32 tx_packets;		/* unit: MSDU */
 	u32 tx_packets_retried;
-        u32 tx_packets_failed;
+	u32 tx_packets_failed;
 	u32 tx_mpdus;
 	u32 tx_retries;
 	u32 tx_failed;
@@ -371,7 +371,7 @@ struct mt76_sta_stats {
 	u64 rx_bytes;
 	u32 rx_packets;
 	u32 rx_mpdus;
-        u32 rx_fcs_err;
+	u32 rx_fcs_err;
 	u32 rx_errors;
 	u32 rx_drops;
 	u64 rx_airtime;
