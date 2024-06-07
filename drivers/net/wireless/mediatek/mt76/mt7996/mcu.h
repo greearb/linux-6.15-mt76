@@ -202,7 +202,20 @@ struct mt7996_mcu_mib {
 struct per_sta_rssi {
 	__le16 wlan_idx;
 	u8 __rsv[2];
-	u8 rcpi[4];
+	u8 rcpi[IEEE80211_MAX_CHAINS];
+} __packed;
+
+struct per_sta_snr {
+	__le16 wlan_idx;
+	u8 __rsv[2];
+	s8 val[IEEE80211_MAX_CHAINS];
+} __packed;
+
+struct per_sta_msdu_cnt {
+	__le16 wlan_idx;
+	u8 __rsv[2];
+	__le32 tx_drops;
+	__le32 tx_retries;
 } __packed;
 
 struct mt7996_mcu_per_sta_info_event {
@@ -213,6 +226,8 @@ struct mt7996_mcu_per_sta_info_event {
 
 	union {
 		struct per_sta_rssi rssi[0];
+		struct per_sta_snr snr[0];
+		struct per_sta_msdu_cnt msdu_cnt[0];
 	};
 } __packed;
 
@@ -268,6 +283,13 @@ struct mt7996_mcu_all_sta_info_event {
 			__le32 tx[IEEE80211_NUM_ACS];
 			__le32 rx[IEEE80211_NUM_ACS];
 		} __packed, airtime);
+
+		DECLARE_FLEX_ARRAY(struct {
+			__le16 wlan_idx;
+			u8 rsv[2];
+			__le32 total;
+			__le32 success;
+		} __packed, rx_mpdu_cnt);
 	} __packed;
 } __packed;
 

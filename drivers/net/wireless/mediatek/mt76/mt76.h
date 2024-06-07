@@ -360,12 +360,17 @@ struct mt76_sta_stats {
 	u64 tx_bytes;
 	/* WED TX */
 	u32 tx_packets;		/* unit: MSDU */
+	u32 tx_packets_retried;
+	u32 tx_packets_failed;
+	u32 tx_mpdus;
 	u32 tx_retries;
 	u32 tx_failed;
 	u64 tx_airtime;
 	/* WED RX */
 	u64 rx_bytes;
 	u32 rx_packets;
+	u32 rx_mpdus;
+	u32 rx_fcs_err;
 	u32 rx_errors;
 	u32 rx_drops;
 	u64 rx_airtime;
@@ -400,6 +405,7 @@ struct mt76_wcid {
 	int inactive_count;
 
 	struct rate_info rate;
+	struct rate_info rx_rate;
 	unsigned long ampdu_state;
 
 	u16 idx;
