@@ -6923,14 +6923,120 @@ static int nl80211_send_station(struct sk_buff *msg, u32 cmd, u32 portid,
 		goto nla_put_failure;
 
 	if (sinfo->mlo_params_valid) {
-		if (nla_put_u8(msg, NL80211_ATTR_MLO_LINK_ID,
-			       sinfo->assoc_link_id))
-			goto nla_put_failure;
+		struct nlattr *nested;
+		unsigned int link_id;
+		int i = 1;
 
 		if (!is_zero_ether_addr(sinfo->mld_addr) &&
 		    nla_put(msg, NL80211_ATTR_MLD_ADDR, ETH_ALEN,
 			    sinfo->mld_addr))
 			goto nla_put_failure;
+
+		nested = nla_nest_start(msg, NL80211_ATTR_MLO_LINKS);
+		if (!nested)
+			goto nla_put_failure;
+
+		for_each_valid_link(sinfo, link_id) {
+			struct nlattr *nested_mlo_links;
+			struct station_link_info *linfo = &sinfo->links[link_id];
+
+			nested_mlo_links = nla_nest_start(msg, i);
+			if (!nested_mlo_links)
+				goto nla_put_failure;
+
+			if (nla_put_u8(msg, NL80211_ATTR_MLO_LINK_ID, link_id) ||
+			    (nla_put(msg, NL80211_ATTR_MAC, ETH_ALEN,
+				     linfo->link_addr)))
+				goto nla_put_failure;
+
+			sinfoattr = nla_nest_start_noflag(msg, NL80211_ATTR_STA_INFO);
+			if (!sinfoattr)
+				goto nla_put_failure;
+
+#define PUT_LINFO(attr, memb, type) do {				\
+	BUILD_BUG_ON(sizeof(type) == sizeof(u64));			\
+	if (linfo->filled & BIT_ULL(NL80211_STA_INFO_ ## attr) &&	\
+	    nla_put_ ## type(msg, NL80211_STA_INFO_ ## attr,		\
+			     linfo->memb))				\
+		goto nla_put_failure;					\
+	} while (0)
+#define PUT_LINFO_U64(attr, memb) do {					\
+	if (linfo->filled & BIT_ULL(NL80211_STA_INFO_ ## attr) &&	\
+	    nla_put_u64_64bit(msg, NL80211_STA_INFO_ ## attr,		\
+			      linfo->memb, NL80211_STA_INFO_PAD))	\
+		goto nla_put_failure;					\
+	} while (0)
+
+			PUT_LINFO_U64(RX_BYTES64, rx_bytes);
+			PUT_LINFO_U64(TX_BYTES64, tx_bytes);
+			PUT_LINFO_U64(RX_DURATION, rx_duration);
+			PUT_LINFO_U64(TX_DURATION, tx_duration);
+
+			switch (rdev->wiphy.signal_type) {
+			case CFG80211_SIGNAL_TYPE_MBM:
+				PUT_LINFO(SIGNAL, signal, u8);
+				PUT_LINFO(SIGNAL_AVG, signal_avg, u8);
+				break;
+			default:
+				break;
+			}
+			if (linfo->filled & BIT_ULL(NL80211_STA_INFO_CHAIN_SIGNAL)) {
+				if (!nl80211_put_signal(msg, linfo->chains,
+							linfo->chain_signal,
+							NL80211_STA_INFO_CHAIN_SIGNAL))
+					goto nla_put_failure;
+			}
+			if (linfo->filled & BIT_ULL(NL80211_STA_INFO_CHAIN_SIGNAL_AVG)) {
+				if (!nl80211_put_signal(msg, linfo->chains,
+							linfo->chain_signal_avg,
+							NL80211_STA_INFO_CHAIN_SIGNAL_AVG))
+					goto nla_put_failure;
+			}
+			if (linfo->filled & BIT_ULL(NL80211_STA_INFO_TX_BITRATE)) {
+				if (!nl80211_put_sta_rate(msg, &linfo->txrate,
+							  NL80211_STA_INFO_TX_BITRATE))
+					goto nla_put_failure;
+			}
+			if (linfo->filled & BIT_ULL(NL80211_STA_INFO_RX_BITRATE)) {
+				if (!nl80211_put_sta_rate(msg, &linfo->rxrate,
+							  NL80211_STA_INFO_RX_BITRATE))
+					goto nla_put_failure;
+			}
+
+			PUT_LINFO(TX_RETRIES, tx_retries, u32);
+			PUT_LINFO(TX_FAILED, tx_failed, u32);
+
+			if (linfo->filled & BIT_ULL(NL80211_STA_INFO_BSS_PARAM)) {
+				bss_param = nla_nest_start_noflag(msg,
+								  NL80211_STA_INFO_BSS_PARAM);
+				if (!bss_param)
+					goto nla_put_failure;
+
+				if (nla_put_u8(msg, NL80211_STA_BSS_PARAM_DTIM_PERIOD,
+					       linfo->bss_param.dtim_period) ||
+				    nla_put_u16(msg, NL80211_STA_BSS_PARAM_BEACON_INTERVAL,
+						linfo->bss_param.beacon_interval))
+					goto nla_put_failure;
+
+				nla_nest_end(msg, bss_param);
+			}
+
+			PUT_LINFO(RX_MPDUS, rx_mpdu_count, u32);
+			PUT_LINFO(FCS_ERROR_COUNT, fcs_err_count, u32);
+			if (wiphy_ext_feature_isset(&rdev->wiphy,
+						    NL80211_EXT_FEATURE_ACK_SIGNAL_SUPPORT)) {
+				PUT_LINFO(ACK_SIGNAL, ack_signal, u8);
+				PUT_LINFO(ACK_SIGNAL_AVG, avg_ack_signal, u8);
+			}
+
+#undef PUT_LINFO
+#undef PUT_LINFO_U64
+
+			nla_nest_end(msg, sinfoattr);
+			nla_nest_end(msg, nested_mlo_links);
+			i++;
+		}
+		nla_nest_end(msg, nested);
 	}
 
 	cfg80211_sinfo_release_content(sinfo);
@@ -6946,7 +7052,7 @@ static int nl80211_send_station(struct sk_buff *msg, u32 cmd, u32 portid,
 static int nl80211_dump_station(struct sk_buff *skb,
 				struct netlink_callback *cb)
 {
-	struct station_info sinfo;
+	struct station_info *sinfo;
 	struct cfg80211_registered_device *rdev;
 	struct wireless_dev *wdev;
 	u8 mac_addr[ETH_ALEN];
@@ -6956,6 +7062,10 @@ static int nl80211_dump_station(struct sk_buff *skb,
 	err = nl80211_prepare_wdev_dump(cb, &rdev, &wdev, NULL);
 	if (err)
 		return err;
+
+	sinfo = kzalloc(sizeof(struct station_info), GFP_KERNEL);
+	if (!sinfo)
+		return -ENOMEM;
 	/* nl80211_prepare_wdev_dump acquired it in the successful case */
 	__acquire(&rdev->wiphy.mtx);
 
@@ -6970,9 +7080,9 @@ static int nl80211_dump_station(struct sk_buff *skb,
 	}
 
 	while (1) {
-		memset(&sinfo, 0, sizeof(sinfo));
+		memset(sinfo, 0, sizeof(*sinfo));
 		err = rdev_dump_station(rdev, wdev->netdev, sta_idx,
-					mac_addr, &sinfo);
+					mac_addr, sinfo);
 		if (err == -ENOENT)
 			break;
 		if (err)
@@ -6982,7 +7092,7 @@ static int nl80211_dump_station(struct sk_buff *skb,
 				NETLINK_CB(cb->skb).portid,
 				cb->nlh->nlmsg_seq, NLM_F_MULTI,
 				rdev, wdev->netdev, mac_addr,
-				&sinfo) < 0)
+				sinfo) < 0)
 			goto out;
 
 		sta_idx++;
@@ -6993,6 +7103,7 @@ static int nl80211_dump_station(struct sk_buff *skb,
 	err = skb->len;
  out_err:
 	wiphy_unlock(&rdev->wiphy);
+	kfree(sinfo);
 
 	return err;
 }
@@ -7001,12 +7112,10 @@ static int nl80211_get_station(struct sk_buff *skb, struct genl_info *info)
 {
 	struct cfg80211_registered_device *rdev = info->user_ptr[0];
 	struct net_device *dev = info->user_ptr[1];
-	struct station_info sinfo;
+	struct station_info *sinfo;
 	struct sk_buff *msg;
 	u8 *mac_addr = NULL;
 	int err;
-
-	memset(&sinfo, 0, sizeof(sinfo));
 
 	if (!info->attrs[NL80211_ATTR_MAC])
 		return -EINVAL;
@@ -7016,24 +7125,35 @@ static int nl80211_get_station(struct sk_buff *skb, struct genl_info *info)
 	if (!rdev->ops->get_station)
 		return -EOPNOTSUPP;
 
-	err = rdev_get_station(rdev, dev, mac_addr, &sinfo);
+	sinfo = kzalloc(sizeof(struct station_info), GFP_KERNEL);
+	if (!sinfo)
+		return -ENOMEM;
+
+	err = rdev_get_station(rdev, dev, mac_addr, sinfo);
 	if (err)
-		return err;
+		goto out;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (!msg) {
-		cfg80211_sinfo_release_content(&sinfo);
-		return -ENOMEM;
+		cfg80211_sinfo_release_content(sinfo);
+		err = -ENOMEM;
+		goto out;
 	}
 
 	if (nl80211_send_station(msg, NL80211_CMD_NEW_STATION,
 				 info->snd_portid, info->snd_seq, 0,
-				 rdev, dev, mac_addr, &sinfo) < 0) {
+				 rdev, dev, mac_addr, sinfo) < 0) {
 		nlmsg_free(msg);
-		return -ENOBUFS;
+		err = -ENOBUFS;
+		goto out;
 	}
 
-	return genlmsg_reply(msg, info);
+	err = genlmsg_reply(msg, info);
+
+out:
+	kfree(sinfo);
+
+	return err;
 }
 
 int cfg80211_check_station_change(struct wiphy *wiphy,
@@ -13109,19 +13229,27 @@ static int cfg80211_cqm_rssi_update(struct cfg80211_registered_device *rdev,
 	if (!cqm_config->last_rssi_event_value &&
 	    wdev->links[0].client.current_bss &&
 	    rdev->ops->get_station) {
-		struct station_info sinfo = {};
+		struct station_info *sinfo;
 		u8 *mac_addr;
+
+		sinfo = kzalloc(sizeof(struct station_info), GFP_KERNEL);
+		if (!sinfo)
+			return -ENOMEM;
 
 		mac_addr = wdev->links[0].client.current_bss->pub.bssid;
 
-		err = rdev_get_station(rdev, dev, mac_addr, &sinfo);
-		if (err)
+		err = rdev_get_station(rdev, dev, mac_addr, sinfo);
+		if (err) {
+			kfree(sinfo);
 			return err;
+		}
 
-		cfg80211_sinfo_release_content(&sinfo);
-		if (sinfo.filled & BIT_ULL(NL80211_STA_INFO_BEACON_SIGNAL_AVG))
+		cfg80211_sinfo_release_content(sinfo);
+		if (sinfo->filled & BIT_ULL(NL80211_STA_INFO_BEACON_SIGNAL_AVG))
 			cqm_config->last_rssi_event_value =
-				(s8) sinfo.rx_beacon_signal_avg;
+				(s8) sinfo->rx_beacon_signal_avg;
+
+		kfree(sinfo);
 	}
 
 	last = cqm_config->last_rssi_event_value;
@@ -15999,7 +16127,7 @@ static int nl80211_probe_mesh_link(struct sk_buff *skb, struct genl_info *info)
 	struct cfg80211_registered_device *rdev = info->user_ptr[0];
 	struct net_device *dev = info->user_ptr[1];
 	struct wireless_dev *wdev = dev->ieee80211_ptr;
-	struct station_info sinfo = {};
+	struct station_info *sinfo;
 	const u8 *buf;
 	size_t len;
 	u8 *dest;
@@ -16028,13 +16156,22 @@ static int nl80211_probe_mesh_link(struct sk_buff *skb, struct genl_info *info)
 	    !ether_addr_equal(buf + ETH_ALEN, dev->dev_addr))
 		return -EINVAL;
 
-	err = rdev_get_station(rdev, dev, dest, &sinfo);
+	sinfo = kzalloc(sizeof(struct station_info), GFP_KERNEL);
+	if (!sinfo)
+		return -ENOMEM;
+
+	err = rdev_get_station(rdev, dev, dest, sinfo);
 	if (err)
-		return err;
+		goto out;
 
-	cfg80211_sinfo_release_content(&sinfo);
+	cfg80211_sinfo_release_content(sinfo);
 
-	return rdev_probe_mesh_link(rdev, dev, dest, buf, len);
+	err = rdev_probe_mesh_link(rdev, dev, dest, buf, len);
+
+out:
+	kfree(sinfo);
+
+	return err;
 }
 
 static int parse_tid_conf(struct cfg80211_registered_device *rdev,
@@ -19076,27 +19213,34 @@ void cfg80211_del_sta_sinfo(struct net_device *dev, const u8 *mac_addr,
 	struct wiphy *wiphy = dev->ieee80211_ptr->wiphy;
 	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wiphy);
 	struct sk_buff *msg;
-	struct station_info empty_sinfo = {};
+	bool new_allocate = false;
 
-	if (!sinfo)
-		sinfo = &empty_sinfo;
+	if (!sinfo) {
+		sinfo = kzalloc(sizeof(struct station_info), GFP_KERNEL);
+		if (!sinfo)
+			return;
+		new_allocate = true;
+	}
 
 	trace_cfg80211_del_sta(dev, mac_addr);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, gfp);
 	if (!msg) {
 		cfg80211_sinfo_release_content(sinfo);
-		return;
+		goto out;
 	}
 
 	if (nl80211_send_station(msg, NL80211_CMD_DEL_STATION, 0, 0, 0,
 				 rdev, dev, mac_addr, sinfo) < 0) {
 		nlmsg_free(msg);
-		return;
+		goto out;
 	}
 
 	genlmsg_multicast_netns(&nl80211_fam, wiphy_net(&rdev->wiphy), msg, 0,
 				NL80211_MCGRP_MLME, gfp);
+out:
+	if (new_allocate)
+		kfree(sinfo);
 }
 EXPORT_SYMBOL(cfg80211_del_sta_sinfo);
 

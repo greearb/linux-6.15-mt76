@@ -1500,7 +1500,7 @@ ieee80211_tx_info_clear_status(struct ieee80211_tx_info *info)
  * @RX_FLAG_AMPDU_EOF_BIT_KNOWN: The EOF value is known
  * @RX_FLAG_RADIOTAP_HE: HE radiotap data is present
  *	(&struct ieee80211_radiotap_he, mac80211 will fill in
- *	
+ *
  *	 - DATA3_DATA_MCS
  *	 - DATA3_DATA_DCM
  *	 - DATA3_CODING
@@ -1508,7 +1508,7 @@ ieee80211_tx_info_clear_status(struct ieee80211_tx_info *info)
  *	 - DATA5_DATA_BW_RU_ALLOC
  *	 - DATA6_NSTS
  *	 - DATA3_STBC
- *	
+ *
  *	from the RX info data, so leave those zeroed when building this data)
  * @RX_FLAG_RADIOTAP_HE_MU: HE MU radiotap data is present
  *	(&struct ieee80211_radiotap_he_mu)
@@ -4628,6 +4628,11 @@ struct ieee80211_ops {
 			       struct ieee80211_vif *vif,
 			       struct ieee80211_sta *sta,
 			       struct station_info *sinfo);
+	void (*sta_link_statistics)(struct ieee80211_hw *hw,
+				    struct ieee80211_vif *vif,
+				    struct ieee80211_sta *sta,
+				    unsigned int link_id,
+				    struct station_link_info *linfo);
 	int (*conf_tx)(struct ieee80211_hw *hw,
 		       struct ieee80211_vif *vif,
 		       unsigned int link_id, u16 ac,
