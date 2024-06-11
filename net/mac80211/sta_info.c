@@ -2900,6 +2900,32 @@ void sta_set_sinfo(struct sta_info *sta, struct station_info *sinfo,
 		sinfo->filled |=
 			BIT_ULL(NL80211_STA_INFO_ACK_SIGNAL_AVG);
 	}
+
+	sinfo->valid_links = sta->sta.valid_links;
+	if (sta->sta.mlo) {
+		unsigned int link_id;
+
+		sinfo->mlo_params_valid = true;
+		memcpy(sinfo->mld_addr, sta->sta.addr, ETH_ALEN);
+		for_each_valid_link(sinfo, link_id) {
+			struct ieee80211_link_sta *link_sta =
+				link_sta_dereference_protected(&sta->sta, link_id);
+			struct ieee80211_bss_conf *link_conf =
+				sdata_dereference(sdata->vif.link_conf[link_id],
+						  sdata);
+			struct station_link_info *linfo = &sinfo->links[link_id];
+
+			if (!link_sta || !link_conf)
+				continue;
+
+			memcpy(linfo->link_addr, link_sta->addr, ETH_ALEN);
+			drv_sta_link_statistics(local, sdata, &sta->sta,
+						link_id, linfo);
+			linfo->filled |= BIT_ULL(NL80211_STA_INFO_BSS_PARAM);
+			linfo->bss_param.dtim_period = link_conf->dtim_period;
+			linfo->bss_param.beacon_interval = link_conf->beacon_int;
+		}
+	}
 }
 
 u32 sta_get_expected_throughput(struct sta_info *sta)

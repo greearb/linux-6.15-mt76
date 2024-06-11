@@ -2059,6 +2059,64 @@ struct cfg80211_tid_stats {
 #define IEEE80211_MAX_CHAINS	4
 
 /**
+ * struct station_link_info - station link information
+ *
+ * @filled: bitflag of flags using the bits of &enum nl80211_sta_info to
+ *	indicate the relevant values in this struct for them
+ * @link_addr: link address
+ * @rx_bytes: bytes (size of MPDUs) received from this station link
+ * @tx_bytes: bytes (size of MPDUs) transmitted to this station link
+ * @signal: The signal strength, type depends on the wiphy's signal_type.
+ *	For CFG80211_SIGNAL_TYPE_MBM, value is expressed in _dBm_.
+ * @signal_avg: Average signal strength, type depends on the wiphy's signal_type.
+ *	For CFG80211_SIGNAL_TYPE_MBM, value is expressed in _dBm_.
+ * @chains: bitmask for filled values in @chain_signal, @chain_signal_avg
+ * @chain_signal: per-chain signal strength of last received packet in dBm
+ * @chain_signal_avg: per-chain signal strength average in dBm
+ * @txrate: current unicast bitrate to this station link
+ * @rxrate: current unicast bitrate from this station link
+ * @tx_retries: cumulative retry counts (MPDUs)
+ * @tx_failed: number of failed transmissions (MPDUs) (retries exceeded, no ACK)
+ * @bss_param: current BSS parameters
+ * @tx_duration: aggregate PPDU duration(usecs) for all the frames to a peer
+ * @rx_duration: aggregate PPDU duration(usecs) for all the frames from a peer
+ * @ack_signal: signal strength (in dBm) of the last ACK frame.
+ * @avg_ack_signal: average rssi value of ack packet for the no of msdu's has
+ *	been sent.
+ * @rx_mpdu_count: number of MPDUs received from this station link
+ * @fcs_err_count: number of packets (MPDUs) received from this station link with
+ *	an FCS error. This counter should be incremented only when TA of the
+ *	received packet with an FCS error matches the peer MAC address.
+ */
+struct station_link_info {
+	u64 filled;
+	u8 link_addr[ETH_ALEN] __aligned(2);
+	u64 rx_bytes;
+	u64 tx_bytes;
+	s8 signal;
+	s8 signal_avg;
+
+	u8 chains;
+	s8 chain_signal[IEEE80211_MAX_CHAINS];
+	s8 chain_signal_avg[IEEE80211_MAX_CHAINS];
+
+	struct rate_info txrate;
+	struct rate_info rxrate;
+	u32 tx_retries;
+	u32 tx_failed;
+	struct sta_bss_parameters bss_param;
+
+	u64 tx_duration;
+	u64 rx_duration;
+
+	s8 ack_signal;
+	s8 avg_ack_signal;
+
+	u32 rx_mpdu_count;
+	u32 fcs_err_count;
+};
+
+/**
  * struct station_info - station information
  *
  * Station information filled by driver for get_station() and dump_station.
@@ -2206,6 +2264,15 @@ struct station_info {
 	u8 mld_addr[ETH_ALEN] __aligned(2);
 	const u8 *assoc_resp_ies;
 	size_t assoc_resp_ies_len;
+
+	u16 valid_links;
+
+	/*
+	 * FIXME: Should be refactored to legacy (real) + links (pointer)
+	 * for saving memory space, as MAX_NUM_LINKS is 15 which would
+	 * cause much of the space allocated but never unused
+	 */
+	struct station_link_info links[IEEE80211_MLD_MAX_NUM_LINKS];
 };
 
 /**
