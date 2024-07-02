@@ -94,16 +94,16 @@ static const u8 mt7996_if_types_ext_capa_sta[] = {
 static const struct wiphy_iftype_ext_capab mt7996_iftypes_ext_capa[] = {
 	{
 		.iftype = NL80211_IFTYPE_STATION,
-		.extended_capabilities = mt7996_if_types_ext_capa,
-		.extended_capabilities_mask = mt7996_if_types_ext_capa,
-		.extended_capabilities_len = sizeof(mt7996_if_types_ext_capa),
+		.extended_capabilities = mt7996_if_types_ext_capa_sta,
+		.extended_capabilities_mask = mt7996_if_types_ext_capa_sta,
+		.extended_capabilities_len = sizeof(mt7996_if_types_ext_capa_sta),
 		.mld_capa_and_ops = 2,
 	},
 	{
 		.iftype = NL80211_IFTYPE_AP,
-		.extended_capabilities = mt7996_if_types_ext_capa,
-		.extended_capabilities_mask = mt7996_if_types_ext_capa,
-		.extended_capabilities_len = sizeof(mt7996_if_types_ext_capa),
+		.extended_capabilities = mt7996_if_types_ext_capa_ap,
+		.extended_capabilities_mask = mt7996_if_types_ext_capa_ap,
+		.extended_capabilities_len = sizeof(mt7996_if_types_ext_capa_ap),
 		.eml_capabilities = IEEE80211_EML_CAP_EMLSR_SUPP,
 		.mld_capa_and_ops = 2,
 		/* the max number of simultaneous links is defined as the
@@ -1604,6 +1604,10 @@ mt7996_init_eht_caps(struct mt7996_phy *phy, enum nl80211_band band,
 		IEEE80211_EHT_MAC_CAP0_OM_CONTROL |
 		u8_encode_bits(IEEE80211_EHT_MAC_CAP0_MAX_MPDU_LEN_11454,
 			       IEEE80211_EHT_MAC_CAP0_MAX_MPDU_LEN_MASK);
+
+	if (iftype == NL80211_IFTYPE_AP)
+		eht_cap_elem->mac_cap_info[0] |=
+			IEEE80211_EHT_MAC_CAP0_SCS_TRAFFIC_DESC;
 
 	eht_cap_elem->mac_cap_info[1] |=
 		IEEE80211_EHT_MAC_CAP1_MAX_AMPDU_LEN_MASK;
