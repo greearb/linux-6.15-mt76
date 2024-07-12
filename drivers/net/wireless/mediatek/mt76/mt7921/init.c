@@ -66,12 +66,12 @@ mt7921_regd_channel_update(struct wiphy *wiphy, struct mt792x_dev *dev)
 #define IS_UNII_INVALID(idx, sfreq, efreq) \
 	(!(dev->phy.clc_chan_conf & BIT(idx)) && (cfreq) >= (sfreq) && (cfreq) <= (efreq))
 	struct ieee80211_supported_band *sband;
-	struct mt76_dev *mdev = &dev->mt76;
+	struct mt76_phy *mphy = &dev->mt76.phy;
 	struct device_node *np, *band_np;
 	struct ieee80211_channel *ch;
 	int i, cfreq;
 
-	np = mt76_find_power_limits_node(mdev);
+	np = mt76_find_power_limits_node(mphy);
 
 	sband = wiphy->bands[NL80211_BAND_5GHZ];
 	band_np = np ? of_get_child_by_name(np, "txpower-5g") : NULL;

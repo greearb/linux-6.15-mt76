@@ -1337,13 +1337,14 @@ int __mt7921_mcu_set_clc(struct mt792x_dev *dev, u8 *alpha2,
 	int ret, valid_cnt = 0;
 	u32 buf_len = 0;
 	u8 *pos;
+	struct mt76_phy *mphy = &dev->mt76.phy;
 
 	if (!clc)
 		return 0;
 
 	if (dev->phy.chip_cap & MT792x_CHIP_CAP_CLC_EVT_EN)
 		req.cap |= CLC_CAP_EVT_EN;
-	if (mt76_find_power_limits_node(&dev->mt76))
+	if (mt76_find_power_limits_node(mphy))
 		req.cap |= CLC_CAP_DTS_EN;
 
 	buf_len = le32_to_cpu(clc->len) - sizeof(*clc);
