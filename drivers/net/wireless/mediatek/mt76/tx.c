@@ -856,9 +856,11 @@ void __mt76_set_tx_blocked(struct mt76_dev *dev, bool blocked)
 }
 EXPORT_SYMBOL_GPL(__mt76_set_tx_blocked);
 
-int mt76_token_consume(struct mt76_dev *dev, struct mt76_txwi_cache **ptxwi)
+int mt76_token_consume(struct mt76_dev *dev, struct mt76_txwi_cache **ptxwi,
+		       u8 phy_idx)
 {
-	int token; //, start = 0;
+	int token = -EINVAL; //, start = 0;
+	struct mt76_phy *phy = mt76_dev_phy(dev, phy_idx);
 
 #if 0
 	/* BEN:  Won't compile, needs out-of-tree WED patches from owrt backports or something.
@@ -869,14 +871,24 @@ int mt76_token_consume(struct mt76_dev *dev, struct mt76_txwi_cache **ptxwi)
 #endif
 
 	spin_lock_bh(&dev->token_lock);
+
+	if (phy->tokens >= dev->token_threshold)
+		goto out;
+
 	token = idr_alloc(&dev->token, *ptxwi, 0, dev->token_size, GFP_ATOMIC);
-	if (token >= 0)
+	if (token >= 0) {
 		dev->token_count++;
+		(*ptxwi)->phy_idx = phy_idx;
+		phy->tokens++;
+	}
 #if 0
 	token = idr_alloc(&dev->token, *ptxwi, start, start + dev->token_size,
 			  GFP_ATOMIC);
-	if (token >= start)
+	if (token >= start) {
 		dev->token_count++;
+		(*ptxwi)->phy_idx = phy_idx;
+		phy->tokens++;
+	}
 #endif
 
 #ifdef CONFIG_NET_MEDIATEK_SOC_WED
@@ -888,6 +900,7 @@ int mt76_token_consume(struct mt76_dev *dev, struct mt76_txwi_cache **ptxwi)
 	if (dev->token_count >= dev->token_size - MT76_TOKEN_FREE_THR)
 		__mt76_set_tx_blocked(dev, true);
 
+out:
 	spin_unlock_bh(&dev->token_lock);
 
 	return token;
@@ -921,7 +934,10 @@ mt76_token_release(struct mt76_dev *dev, int token, bool *wake)
 
 	txwi = idr_remove(&dev->token, token);
 	if (txwi) {
+		struct mt76_phy *phy = mt76_dev_phy(dev, txwi->phy_idx);
+
 		dev->token_count--;
+		phy->tokens--;
 
 #ifdef CONFIG_NET_MEDIATEK_SOC_WED
 		if (mtk_wed_device_active(&dev->mmio.wed) &&
