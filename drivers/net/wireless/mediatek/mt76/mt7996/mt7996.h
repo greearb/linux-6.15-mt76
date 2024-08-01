@@ -357,11 +357,11 @@ struct mt7996_sta_link {
 	struct list_head rc_list;
 
 	s8 chain_signal[IEEE80211_MAX_CHAINS];
-        int signal;
-        struct ewma_avg_signal chain_signal_avg[IEEE80211_MAX_CHAINS];
-        struct ewma_avg_signal signal_avg;
+	int signal;
+	struct ewma_avg_signal chain_signal_avg[IEEE80211_MAX_CHAINS];
+	struct ewma_avg_signal signal_avg;
 
-        s8 chain_ack_signal[IEEE80211_MAX_CHAINS];
+	s8 chain_ack_signal[IEEE80211_MAX_CHAINS];
 	int ack_signal;
 	struct ewma_avg_signal avg_ack_signal;
 
