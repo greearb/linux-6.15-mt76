@@ -1090,6 +1090,7 @@ struct mt76_dev {
 
 	struct debugfs_blob_wrapper eeprom;
 	struct debugfs_blob_wrapper otp;
+	struct debugfs_blob_wrapper ext_eeprom;
 
 	char alpha2[3];
 	enum nl80211_dfs_regions region;
