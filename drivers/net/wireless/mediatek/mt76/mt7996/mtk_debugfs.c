@@ -533,26 +533,48 @@ mt7996_show_dma_info(struct seq_file *s, struct mt7996_dev *dev)
 		WF_WFDMA_HOST_DMA0_WPDMA_TX_RING16_CTRL0_ADDR);
 	dump_dma_tx_ring_info(s, dev, "T17:Cmd(H2WM)", "Both",
 		WF_WFDMA_HOST_DMA0_WPDMA_TX_RING17_CTRL0_ADDR);
-	dump_dma_tx_ring_info(s, dev, "T18:TXD0(H2WA)", "AP",
-		WF_WFDMA_HOST_DMA0_WPDMA_TX_RING18_CTRL0_ADDR);
-	dump_dma_tx_ring_info(s, dev, "T19:TXD1(H2WA)", "AP",
-		WF_WFDMA_HOST_DMA0_WPDMA_TX_RING19_CTRL0_ADDR);
-	dump_dma_tx_ring_info(s, dev, "T20:Cmd(H2WA)", "AP",
-		WF_WFDMA_HOST_DMA0_WPDMA_TX_RING20_CTRL0_ADDR);
-	dump_dma_tx_ring_info(s, dev, "T21:TXD2(H2WA)", "AP",
-		WF_WFDMA_HOST_DMA0_WPDMA_TX_RING21_CTRL0_ADDR);
-	dump_dma_tx_ring_info(s, dev, "T22:TXD3(H2WA)", "AP",
-		WF_WFDMA_HOST_DMA0_WPDMA_TX_RING22_CTRL0_ADDR);
+	if (mt7996_has_wa(dev)) {
+		dump_dma_tx_ring_info(s, dev, "T18:TXD0(H2WA)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_TX_RING18_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T19:TXD1(H2WA)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_TX_RING19_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T20:Cmd(H2WA)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_TX_RING20_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T21:TXD2(H2WA)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_TX_RING21_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T22:TXD3(H2WA)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_TX_RING22_CTRL0_ADDR);
+	} else {
+		dump_dma_tx_ring_info(s, dev, "T18:TXD0(H2SDO)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_TX_RING18_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T19:TXD1(H2SDO)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_TX_RING19_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T20:Reserved", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_TX_RING20_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T21:TXD2(H2SDO)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_TX_RING21_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T22:TXD3(H2SDO)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_TX_RING22_CTRL0_ADDR);
+	}
 
 
 	dump_dma_rx_ring_info(s, dev, "R0:Event(WM2H)", "Both",
 		WF_WFDMA_HOST_DMA0_WPDMA_RX_RING0_CTRL0_ADDR);
-	dump_dma_rx_ring_info(s, dev, "R1:Event(WA2H)", "AP",
-		WF_WFDMA_HOST_DMA0_WPDMA_RX_RING1_CTRL0_ADDR);
-	dump_dma_rx_ring_info(s, dev, "R2:TxDone0(WA2H)", "AP",
-		WF_WFDMA_HOST_DMA0_WPDMA_RX_RING2_CTRL0_ADDR);
-	dump_dma_rx_ring_info(s, dev, "R3:TxDone1(WA2H)", "AP",
-		WF_WFDMA_HOST_DMA0_WPDMA_RX_RING3_CTRL0_ADDR);
+	if (mt7996_has_wa(dev)) {
+		dump_dma_rx_ring_info(s, dev, "R1:Event(WA2H)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_RX_RING1_CTRL0_ADDR);
+		dump_dma_rx_ring_info(s, dev, "R2:TxDone0(WA2H)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_RX_RING2_CTRL0_ADDR);
+		dump_dma_rx_ring_info(s, dev, "R3:TxDone1(WA2H)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_RX_RING3_CTRL0_ADDR);
+	} else {
+		dump_dma_rx_ring_info(s, dev, "R1:Event(SDO2H)", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_RX_RING1_CTRL0_ADDR);
+		dump_dma_rx_ring_info(s, dev, "R2:Reserved", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_RX_RING2_CTRL0_ADDR);
+		dump_dma_rx_ring_info(s, dev, "R3:Reserved", "AP",
+			WF_WFDMA_HOST_DMA0_WPDMA_RX_RING3_CTRL0_ADDR);
+	}
 	dump_dma_rx_ring_info(s, dev, "R4:Data0(MAC2H)", "Both",
 		WF_WFDMA_HOST_DMA0_WPDMA_RX_RING4_CTRL0_ADDR);
 	dump_dma_rx_ring_info(s, dev, "R5:Data1(MAC2H)", "Both",
@@ -563,8 +585,12 @@ mt7996_show_dma_info(struct seq_file *s, struct mt7996_dev *dev)
 	else
 		dump_dma_rx_ring_info(s, dev, "R6:TxDone0(MAC2H)", "Both",
 			WF_WFDMA_HOST_DMA0_WPDMA_RX_RING6_CTRL0_ADDR);
-	dump_dma_rx_ring_info(s, dev, "R7:TxDone1(MAC2H)", "Both",
-		WF_WFDMA_HOST_DMA0_WPDMA_RX_RING7_CTRL0_ADDR);
+	if (is_mt7990(&dev->mt76))
+		dump_dma_rx_ring_info(s, dev, "R7:Reserved)", "Both",
+			WF_WFDMA_HOST_DMA0_WPDMA_RX_RING7_CTRL0_ADDR);
+	else
+		dump_dma_rx_ring_info(s, dev, "R7:TxDone1(MAC2H)", "Both",
+			WF_WFDMA_HOST_DMA0_WPDMA_RX_RING7_CTRL0_ADDR);
 	dump_dma_rx_ring_info(s, dev, "R8:BUF0(MAC2H)", "Both",
 		WF_WFDMA_HOST_DMA0_WPDMA_RX_RING8_CTRL0_ADDR);
 	if (is_mt7996(&dev->mt76))
@@ -586,12 +612,21 @@ mt7996_show_dma_info(struct seq_file *s, struct mt7996_dev *dev)
 		seq_printf(s, "HOST_DMA0 PCIe1 Ring Configuration\n");
 		seq_printf(s, "%20s %6s %10s %15s %10s %10s %10s\n",
 			"Name", "Used", "Base", "Ctrl1(Cnt)", "CIDX", "DIDX", "QCnt");
-		dump_dma_tx_ring_info(s, dev, "T21:TXD2(H2WA)", "AP",
-			WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_TX_RING21_CTRL0_ADDR);
-		dump_dma_tx_ring_info(s, dev, "T22:TXD?(H2WA)", "AP",
-			WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_TX_RING22_CTRL0_ADDR);
-		dump_dma_rx_ring_info(s, dev, "R3:TxDone1(WA2H)", "AP",
-			WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_RX_RING3_CTRL0_ADDR);
+		if (mt7996_has_wa(dev)) {
+			dump_dma_tx_ring_info(s, dev, "T21:TXD2(H2WA)", "AP",
+				WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_TX_RING21_CTRL0_ADDR);
+			dump_dma_tx_ring_info(s, dev, "T22:TXD?(H2WA)", "AP",
+				WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_TX_RING22_CTRL0_ADDR);
+			dump_dma_rx_ring_info(s, dev, "R3:TxDone1(WA2H)", "AP",
+				WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_RX_RING3_CTRL0_ADDR);
+		} else {
+			dump_dma_tx_ring_info(s, dev, "T21:TXD2(H2SDO)", "AP",
+				WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_TX_RING21_CTRL0_ADDR);
+			dump_dma_tx_ring_info(s, dev, "T22:TXD?(H2SDO)", "AP",
+				WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_TX_RING22_CTRL0_ADDR);
+			dump_dma_rx_ring_info(s, dev, "R3:Reserved", "AP",
+				WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_RX_RING3_CTRL0_ADDR);
+		}
 		dump_dma_rx_ring_info(s, dev, "R5:Data1(MAC2H)", "Both",
 			WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_RX_RING5_CTRL0_ADDR);
 		if (is_mt7996(&dev->mt76))
@@ -599,7 +634,7 @@ mt7996_show_dma_info(struct seq_file *s, struct mt7996_dev *dev)
 				WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_RX_RING6_CTRL0_ADDR);
 		dump_dma_rx_ring_info(s, dev, "R7:TxDone1(MAC2H)", "Both",
 			WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_RX_RING7_CTRL0_ADDR);
-		if (is_mt7992(&dev->mt76))
+		if (is_mt7992(&dev->mt76) || is_mt7990(&dev->mt76))
 			dump_dma_rx_ring_info(s, dev, "R9:BUF1(MAC2H)", "Both",
 				WF_WFDMA_HOST_DMA0_PCIE1_WPDMA_RX_RING9_CTRL0_ADDR);
 	}
@@ -628,36 +663,62 @@ mt7996_show_dma_info(struct seq_file *s, struct mt7996_dev *dev)
 		"Name", "Used", "Base", "Cnt", "CIDX", "DIDX", "QCnt");
 	dump_dma_tx_ring_info(s, dev, "T0:Event(WM2H)", "Both",
 		WF_WFDMA_MCU_DMA0_WPDMA_TX_RING0_CTRL0_ADDR);
-	dump_dma_tx_ring_info(s, dev, "T1:Event(WA2H)", "AP",
-		WF_WFDMA_MCU_DMA0_WPDMA_TX_RING1_CTRL0_ADDR);
-	dump_dma_tx_ring_info(s, dev, "T2:TxDone0(WA2H)", "AP",
-		WF_WFDMA_MCU_DMA0_WPDMA_TX_RING2_CTRL0_ADDR);
-	dump_dma_tx_ring_info(s, dev, "T3:TxDone1(WA2H)", "AP",
-		WF_WFDMA_MCU_DMA0_WPDMA_TX_RING3_CTRL0_ADDR);
+	if (mt7996_has_wa(dev)) {
+		dump_dma_tx_ring_info(s, dev, "T1:Event(WA2H)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_TX_RING1_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T2:TxDone0(WA2H)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_TX_RING2_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T3:TxDone1(WA2H)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_TX_RING3_CTRL0_ADDR);
+	} else {
+		dump_dma_tx_ring_info(s, dev, "T1:Event(SDO2H)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_TX_RING1_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T2:Reserved", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_TX_RING2_CTRL0_ADDR);
+		dump_dma_tx_ring_info(s, dev, "T3:Reserved", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_TX_RING3_CTRL0_ADDR);
+	}
 	dump_dma_tx_ring_info(s, dev, "T4:TXD(WM2MAC)", "Both",
 		WF_WFDMA_MCU_DMA0_WPDMA_TX_RING4_CTRL0_ADDR);
 	dump_dma_tx_ring_info(s, dev, "T5:TXCMD(WM2MAC)", "Both",
 		WF_WFDMA_MCU_DMA0_WPDMA_TX_RING5_CTRL0_ADDR);
-	dump_dma_tx_ring_info(s, dev, "T6:TXD(WA2MAC)", "AP",
-		WF_WFDMA_MCU_DMA0_WPDMA_TX_RING6_CTRL0_ADDR);
+	if (mt7996_has_wa(dev))
+		dump_dma_tx_ring_info(s, dev, "T6:TXD(WA2MAC)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_TX_RING6_CTRL0_ADDR);
+	else
+		dump_dma_tx_ring_info(s, dev, "T6:TXD(SDO2MAC)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_TX_RING6_CTRL0_ADDR);
 	dump_dma_rx_ring_info(s, dev, "R0:FWDL", "Both",
 		WF_WFDMA_MCU_DMA0_WPDMA_RX_RING0_CTRL0_ADDR);
 	dump_dma_rx_ring_info(s, dev, "R1:Cmd(H2WM)", "Both",
 		WF_WFDMA_MCU_DMA0_WPDMA_RX_RING1_CTRL0_ADDR);
-	dump_dma_rx_ring_info(s, dev, "R2:TXD0(H2WA)", "AP",
-		WF_WFDMA_MCU_DMA0_WPDMA_RX_RING2_CTRL0_ADDR);
-	dump_dma_rx_ring_info(s, dev, "R3:TXD1(H2WA)", "AP",
-		WF_WFDMA_MCU_DMA0_WPDMA_RX_RING3_CTRL0_ADDR);
-	dump_dma_rx_ring_info(s, dev, "R4:Cmd(H2WA)", "AP",
-		WF_WFDMA_MCU_DMA0_WPDMA_RX_RING4_CTRL0_ADDR);
+	if (mt7996_has_wa(dev)) {
+		dump_dma_rx_ring_info(s, dev, "R2:TXD0(H2WA)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_RX_RING2_CTRL0_ADDR);
+		dump_dma_rx_ring_info(s, dev, "R3:TXD1(H2WA)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_RX_RING3_CTRL0_ADDR);
+		dump_dma_rx_ring_info(s, dev, "R4:Cmd(H2WA)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_RX_RING4_CTRL0_ADDR);
+	} else {
+		dump_dma_rx_ring_info(s, dev, "R2:TXD0(H2SDO)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_RX_RING2_CTRL0_ADDR);
+		dump_dma_rx_ring_info(s, dev, "R3:TXD1(H2SDO)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_RX_RING3_CTRL0_ADDR);
+		dump_dma_rx_ring_info(s, dev, "R4:Reserved", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_RX_RING4_CTRL0_ADDR);
+	}
 	dump_dma_rx_ring_info(s, dev, "R5:Data0(MAC2WM)", "Both",
 		WF_WFDMA_MCU_DMA0_WPDMA_RX_RING5_CTRL0_ADDR);
 	dump_dma_rx_ring_info(s, dev, "R6:TxDone(MAC2WM)", "Both",
 		WF_WFDMA_MCU_DMA0_WPDMA_RX_RING6_CTRL0_ADDR);
 	dump_dma_rx_ring_info(s, dev, "R7:SPL/RPT(MAC2WM)", "Both",
 		WF_WFDMA_MCU_DMA0_WPDMA_RX_RING7_CTRL0_ADDR);
-	dump_dma_rx_ring_info(s, dev, "R8:TxDone(MAC2WA)", "AP",
-		WF_WFDMA_MCU_DMA0_WPDMA_RX_RING8_CTRL0_ADDR);
+	if (mt7996_has_wa(dev))
+		dump_dma_rx_ring_info(s, dev, "R8:TxDone(MAC2WA)", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_RX_RING8_CTRL0_ADDR);
+	else
+		dump_dma_rx_ring_info(s, dev, "R8:Reserved", "AP",
+			WF_WFDMA_MCU_DMA0_WPDMA_RX_RING8_CTRL0_ADDR);
 	dump_dma_rx_ring_info(s, dev, "R9:Data1(MAC2WM)", "Both",
 		WF_WFDMA_MCU_DMA0_WPDMA_RX_RING9_CTRL0_ADDR);
 	dump_dma_rx_ring_info(s, dev, "R10:TXD2(H2WA)", "AP",
@@ -756,9 +817,9 @@ static int mt7996_mibinfo_show(struct seq_file *s, void *data)
 	msr0 = mt76_rr(dev, BN0_WF_MIB_TOP_MSR0_ADDR + band_offset);
 	msr1 = mt76_rr(dev, BN0_WF_MIB_TOP_MSR1_ADDR + band_offset);
 	msr2 = mt76_rr(dev, BN0_WF_MIB_TOP_MSR2_ADDR + band_offset);
-	ampdu_cnt[0] = mt76_rr(dev, BN0_WF_MIB_TOP_TSCR0_ADDR + band_offset);
-	ampdu_cnt[1] = mt76_rr(dev, BN0_WF_MIB_TOP_TSCR3_ADDR + band_offset);
-	ampdu_cnt[2] = mt76_rr(dev, BN0_WF_MIB_TOP_TSCR4_ADDR + band_offset);
+	ampdu_cnt[0] = mt76_rr(dev, MT_MIB_TSCR0(band_idx));
+	ampdu_cnt[1] = mt76_rr(dev, MT_MIB_TSCR3(band_idx));
+	ampdu_cnt[2] = mt76_rr(dev, MT_MIB_TSCR4(band_idx));
 	ampdu_cnt[1] &= BN0_WF_MIB_TOP_TSCR3_AMPDU_MPDU_COUNT_MASK;
 	ampdu_cnt[2] &= BN0_WF_MIB_TOP_TSCR4_AMPDU_ACKED_COUNT_MASK;
 
@@ -800,7 +861,7 @@ static int mt7996_mibinfo_show(struct seq_file *s, void *data)
 	tbcr3 = mt76_rr(dev, BN0_WF_MIB_TOP_TBCR3_ADDR + band_offset);
 	seq_printf(s, "\tTx 160MHz Cnt=0x%x\n",
 		tbcr3 & BN0_WF_MIB_TOP_TBCR3_TX_160MHZ_CNT_MASK);
-	tbcr4 = mt76_rr(dev, BN0_WF_MIB_TOP_TBCR4_ADDR + band_offset);
+	tbcr4 = is_mt7996(&dev->mt76) ? mt76_rr(dev, BN0_WF_MIB_TOP_TBCR4_ADDR + band_offset) : 0;
 	seq_printf(s, "\tTx 320MHz Cnt=0x%x\n",
 		tbcr4 & BN0_WF_MIB_TOP_TBCR4_TX_320MHZ_CNT_MASK);
 	seq_printf(s, "\tAMPDU Cnt=0x%x\n", ampdu_cnt[0]);
@@ -812,10 +873,10 @@ static int mt7996_mibinfo_show(struct seq_file *s, void *data)
 
 	seq_printf(s, "===MU Related Counters===\n");
 	mu_cnt[0] = mt76_rr(dev, BN0_WF_MIB_TOP_BSCR2_ADDR + band_offset);
-	mu_cnt[1] = mt76_rr(dev, BN0_WF_MIB_TOP_TSCR5_ADDR + band_offset);
-	mu_cnt[2] = mt76_rr(dev, BN0_WF_MIB_TOP_TSCR6_ADDR + band_offset);
+	mu_cnt[1] = mt76_rr(dev, MT_MIB_TSCR5(band_idx));
+	mu_cnt[2] = mt76_rr(dev, MT_MIB_TSCR6(band_idx));
 	mu_cnt[3] = mt76_rr(dev, BN0_WF_MIB_TOP_TSCR8_ADDR + band_offset);
-	mu_cnt[4] = mt76_rr(dev, BN0_WF_MIB_TOP_TSCR7_ADDR + band_offset);
+	mu_cnt[4] = mt76_rr(dev, MT_MIB_TSCR7(band_idx));
 
 	seq_printf(s, "\tMUBF_TX_COUNT=0x%x\n",
 		mu_cnt[0] & BN0_WF_MIB_TOP_BSCR2_MUBF_TX_COUNT_MASK);
@@ -937,18 +998,25 @@ mt7996_wtbl_read_raw(struct mt7996_dev *dev, u16 idx,
 		return 0xFF;
 
 	if (type == WTBL_TYPE_LMAC) {
-		mt76_wr(dev, MT_DBG_WTBLON_TOP_WDUCR_ADDR,
-			FIELD_PREP(MT_DBG_WTBLON_TOP_WDUCR_GROUP, (idx >> 7)));
+		mt76_wr(dev, MT_WTBLON_TOP_WDUCR,
+			FIELD_PREP(MT_WTBLON_TOP_WDUCR_GROUP, (idx >> 7)));
 		src = LWTBL_IDX2BASE(idx, start_dw);
 	} else if (type == WTBL_TYPE_UMAC) {
 		mt76_wr(dev,  MT_DBG_UWTBL_TOP_WDUCR_ADDR,
 			FIELD_PREP(MT_DBG_UWTBL_TOP_WDUCR_GROUP, (idx >> 7)));
 		src = UWTBL_IDX2BASE(idx, start_dw);
 	} else if (type == WTBL_TYPE_KEY) {
-		mt76_wr(dev,  MT_DBG_UWTBL_TOP_WDUCR_ADDR,
-			MT_DBG_UWTBL_TOP_WDUCR_TARGET |
-			FIELD_PREP(MT_DBG_UWTBL_TOP_WDUCR_GROUP, (idx >> 7)));
-		src = KEYTBL_IDX2BASE(idx, start_dw);
+		if (is_mt7990(&dev->mt76)) {
+			mt76_wr(dev,  MT_DBG_UWTBL_TOP_KDUCR_ADDR,
+				FIELD_PREP(MT_DBG_UWTBL_TOP_KDUCR_GROUP, (idx >> 6)));
+			src = KEYTBL_IDX2BASE_7990(idx, start_dw);
+		} else {
+			mt76_wr(dev,  MT_DBG_UWTBL_TOP_WDUCR_ADDR,
+				MT_DBG_UWTBL_TOP_WDUCR_TARGET |
+				FIELD_PREP(MT_DBG_UWTBL_TOP_WDUCR_GROUP, (idx >> 7)));
+			src = KEYTBL_IDX2BASE(idx, start_dw);
+		}
+
 	}
 
 	while (size_dw--) {
@@ -968,8 +1036,8 @@ mt7996_wtbl_write_raw(struct mt7996_dev *dev, u16 idx,
 	u32 addr = 0;
 
 	if (type == WTBL_TYPE_LMAC) {
-		mt76_wr(dev, MT_DBG_WTBLON_TOP_WDUCR_ADDR,
-			FIELD_PREP(MT_DBG_WTBLON_TOP_WDUCR_GROUP, (idx >> 7)));
+		mt76_wr(dev, MT_WTBLON_TOP_WDUCR,
+			FIELD_PREP(MT_WTBLON_TOP_WDUCR_GROUP, (idx >> 7)));
 		addr = LWTBL_IDX2BASE(idx, start_dw);
 	} else if (type == WTBL_TYPE_UMAC) {
 		mt76_wr(dev, MT_DBG_UWTBL_TOP_WDUCR_ADDR,
@@ -1592,7 +1660,7 @@ static void parse_fmac_lwtbl_dw14(struct seq_file *s, u8 *lwtbl)
 		== MUAR_INDEX_OWN_MAC_ADDR_BC_MC) {
 		/* LMAC WTBL DW 14 */
 		seq_printf(s, "\t\n");
-		seq_printf(s, "LWTBL DW 14\n");
+		seq_printf(s, "LWTBL DW 14_BMC\n");
 		addr = (u32 *)&(lwtbl[WF_LWTBL_CIPHER_SUIT_IGTK_DW*4]);
 		dw_value = *addr;
 
@@ -1768,10 +1836,12 @@ static void parse_fmac_lwtbl_dw31(struct seq_file *s, u8 *lwtbl)
 }
 
 static const struct berse_wtbl_parse WTBL_LMAC_DW32[] = {
-	{"OM_INFO",			WF_LWTBL_OM_INFO_MASK,			WF_LWTBL_OM_INFO_SHIFT,		false},
-	{"OM_INFO_EHT",         WF_LWTBL_OM_INFO_EHT_MASK,         WF_LWTBL_OM_INFO_EHT_SHIFT,  false},
-	{"RXD_DUP_FOR_OM_CHG",		WF_LWTBL_RXD_DUP_FOR_OM_CHG_MASK,	NO_SHIFT_DEFINE,		false},
+	{"OM_INFO",		WF_LWTBL_OM_INFO_MASK,			WF_LWTBL_OM_INFO_SHIFT,			false},
+	{"OM_INFO_EHT",		WF_LWTBL_OM_INFO_EHT_MASK,		WF_LWTBL_OM_INFO_EHT_SHIFT,		false},
+	{"RXD_DUP_FOR_OM_CHG",	WF_LWTBL_RXD_DUP_FOR_OM_CHG_MASK,	NO_SHIFT_DEFINE,			false},
 	{"RXD_DUP_WHITE_LIST",	WF_LWTBL_RXD_DUP_WHITE_LIST_MASK,	WF_LWTBL_RXD_DUP_WHITE_LIST_SHIFT,	false},
+	{"RXD_DUP_MODE",	WF_LWTBL_RXD_DUP_MODE_MASK,		WF_LWTBL_RXD_DUP_MODE_SHIFT,		false},
+	{"ACK_EN",		WF_LWTBL_ACK_EN_MASK,			NO_SHIFT_DEFINE,			true},
 	{NULL,}
 };
 
@@ -1865,11 +1935,20 @@ static void parse_fmac_lwtbl_dw34(struct seq_file *s, u8 *lwtbl)
 	}
 }
 
-static const struct berse_wtbl_parse WTBL_LMAC_DW35[] = {
+static const struct berse_wtbl_parse *WTBL_LMAC_DW35;
+static const struct berse_wtbl_parse WTBL_LMAC_DW35_7996[] = {
 	{"SNR 0",	WF_LWTBL_SNR_RX0_MASK,		WF_LWTBL_SNR_RX0_SHIFT,		false},
 	{"SNR 1",	WF_LWTBL_SNR_RX1_MASK,		WF_LWTBL_SNR_RX1_SHIFT,		false},
 	{"SNR 2",	WF_LWTBL_SNR_RX2_MASK,		WF_LWTBL_SNR_RX2_SHIFT,		false},
 	{"SNR 3",	WF_LWTBL_SNR_RX3_MASK,		WF_LWTBL_SNR_RX3_SHIFT,		true},
+	{NULL,}
+};
+
+static const struct berse_wtbl_parse WTBL_LMAC_DW35_7992[] = {
+	{"SNR 0",	WF_LWTBL_SNR_RX0_MASK_7992,	WF_LWTBL_SNR_RX0_SHIFT_7992,	false},
+	{"SNR 1",	WF_LWTBL_SNR_RX1_MASK_7992,	WF_LWTBL_SNR_RX1_SHIFT_7992,	false},
+	{"SNR 2",	WF_LWTBL_SNR_RX2_MASK_7992,	WF_LWTBL_SNR_RX2_SHIFT_7992,	false},
+	{"SNR 3",	WF_LWTBL_SNR_RX3_MASK_7992,	WF_LWTBL_SNR_RX3_SHIFT_7992,	true},
 	{NULL,}
 };
 
@@ -2136,16 +2215,21 @@ static void dump_key_table(
 	seq_printf(s, "\t\n");
 	seq_printf(s, "\t%s:%d\n", "keyloc0", keyloc0);
 	if (keyloc0 != INVALID_KEY_ENTRY) {
-
 		/* Don't swap below two lines, halWtblReadRaw will
 		* write new value WF_WTBLON_TOP_WDUCR_ADDR
 		*/
 		mt7996_wtbl_read_raw(dev, keyloc0,
 			WTBL_TYPE_KEY, 0, ONE_KEY_ENTRY_LEN_IN_DW, keytbl);
-		seq_printf(s, "\t\tKEY WTBL Addr: group:0x%x=0x%x addr: 0x%lx\n",
-			MT_DBG_UWTBL_TOP_WDUCR_ADDR,
-			mt76_rr(dev, MT_DBG_UWTBL_TOP_WDUCR_ADDR),
-			KEYTBL_IDX2BASE(keyloc0, 0));
+		if (is_mt7990(&dev->mt76))
+			seq_printf(s, "\t\tKEY WTBL Addr: group:0x%x=0x%x addr: 0x%lx\n",
+				MT_DBG_UWTBL_TOP_KDUCR_ADDR,
+				mt76_rr(dev, MT_DBG_UWTBL_TOP_KDUCR_ADDR),
+				KEYTBL_IDX2BASE_7990(keyloc0, 0));
+		else
+			seq_printf(s, "\t\tKEY WTBL Addr: group:0x%x=0x%x addr: 0x%lx\n",
+				MT_DBG_UWTBL_TOP_WDUCR_ADDR,
+				mt76_rr(dev, MT_DBG_UWTBL_TOP_WDUCR_ADDR),
+				KEYTBL_IDX2BASE(keyloc0, 0));
 		for (x = 0; x < ONE_KEY_ENTRY_LEN_IN_DW; x++) {
 			seq_printf(s, "\t\tDW%02d: %02x %02x %02x %02x\n",
 				x,
@@ -2163,10 +2247,16 @@ static void dump_key_table(
 		*/
 		mt7996_wtbl_read_raw(dev, keyloc1,
 			WTBL_TYPE_KEY, 0, ONE_KEY_ENTRY_LEN_IN_DW, keytbl);
-		seq_printf(s, "\t\tKEY WTBL Addr: group:0x%x=0x%x addr: 0x%lx\n",
-			MT_DBG_UWTBL_TOP_WDUCR_ADDR,
-			mt76_rr(dev, MT_DBG_UWTBL_TOP_WDUCR_ADDR),
-			KEYTBL_IDX2BASE(keyloc1, 0));
+		if (is_mt7990(&dev->mt76))
+			seq_printf(s, "\t\tKEY WTBL Addr: group:0x%x=0x%x addr: 0x%lx\n",
+				MT_DBG_UWTBL_TOP_KDUCR_ADDR,
+				mt76_rr(dev, MT_DBG_UWTBL_TOP_KDUCR_ADDR),
+				KEYTBL_IDX2BASE_7990(keyloc1, 0));
+		else
+			seq_printf(s, "\t\tKEY WTBL Addr: group:0x%x=0x%x addr: 0x%lx\n",
+				MT_DBG_UWTBL_TOP_WDUCR_ADDR,
+				mt76_rr(dev, MT_DBG_UWTBL_TOP_WDUCR_ADDR),
+				KEYTBL_IDX2BASE(keyloc1, 0));
 		for (x = 0; x < ONE_KEY_ENTRY_LEN_IN_DW; x++) {
 			seq_printf(s, "\t\tDW%02d: %02x %02x %02x %02x\n",
 				x,
@@ -2184,10 +2274,16 @@ static void dump_key_table(
 		*/
 		mt7996_wtbl_read_raw(dev, keyloc2,
 			WTBL_TYPE_KEY, 0, ONE_KEY_ENTRY_LEN_IN_DW, keytbl);
-		seq_printf(s, "\t\tKEY WTBL Addr: group:0x%x=0x%x addr: 0x%lx\n",
-			MT_DBG_UWTBL_TOP_WDUCR_ADDR,
-			mt76_rr(dev, MT_DBG_UWTBL_TOP_WDUCR_ADDR),
-			KEYTBL_IDX2BASE(keyloc2, 0));
+		if (is_mt7990(&dev->mt76))
+			seq_printf(s, "\t\tKEY WTBL Addr: group:0x%x=0x%x addr: 0x%lx\n",
+				MT_DBG_UWTBL_TOP_KDUCR_ADDR,
+				mt76_rr(dev, MT_DBG_UWTBL_TOP_KDUCR_ADDR),
+				KEYTBL_IDX2BASE_7990(keyloc2, 0));
+		else
+			seq_printf(s, "\t\tKEY WTBL Addr: group:0x%x=0x%x addr: 0x%lx\n",
+				MT_DBG_UWTBL_TOP_WDUCR_ADDR,
+				mt76_rr(dev, MT_DBG_UWTBL_TOP_WDUCR_ADDR),
+				KEYTBL_IDX2BASE(keyloc2, 0));
 		for (x = 0; x < ONE_KEY_ENTRY_LEN_IN_DW; x++) {
 			seq_printf(s, "\t\tDW%02d: %02x %02x %02x %02x\n",
 				x,
@@ -2236,6 +2332,7 @@ static const struct berse_wtbl_parse WTBL_UMAC_DW8[] = {
 	{"UWTBL_QOS",		WF_UWTBL_QOS_MASK,		NO_SHIFT_DEFINE,	false},
 	{"UWTBL_HT_VHT_HE",	WF_UWTBL_HT_MASK,		NO_SHIFT_DEFINE,	false},
 	{"UWTBL_HDRT_MODE",	WF_UWTBL_HDRT_MODE_MASK,	NO_SHIFT_DEFINE,	true},
+	{"UWTBL_AAD_OM",	WF_UWTBL_AAD_OM_MASK,		WF_UWTBL_AAD_OM_SHIFT,	true},
 	{NULL,}
 };
 
@@ -2316,8 +2413,8 @@ static int mt7996_wtbl_read(struct seq_file *s, void *data)
 				 LWTBL_LEN_IN_DW, lwtbl);
 	seq_printf(s, "Dump WTBL info of WLAN_IDX:%d\n", dev->wlan_idx);
 	seq_printf(s, "LMAC WTBL Addr: group:0x%x=0x%x addr: 0x%lx\n",
-		   MT_DBG_WTBLON_TOP_WDUCR_ADDR,
-		   mt76_rr(dev, MT_DBG_WTBLON_TOP_WDUCR_ADDR),
+		   MT_WTBLON_TOP_WDUCR,
+		   mt76_rr(dev, MT_WTBLON_TOP_WDUCR),
 		   LWTBL_IDX2BASE(dev->wlan_idx, 0));
 	for (x = 0; x < LWTBL_LEN_IN_DW; x++) {
 		seq_printf(s, "DW%02d: %02x %02x %02x %02x\n",
@@ -3613,7 +3710,7 @@ mt7996_pseinfo_read(struct seq_file *s, void *data)
 			  ((pse_stat[0] & WF_PSE_TOP_QUEUE_EMPTY_CPU_Q2_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_CPU_Q2_EMPTY_SHFT),
 			  ((pse_stat[0] & WF_PSE_TOP_QUEUE_EMPTY_CPU_Q3_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_CPU_Q3_EMPTY_SHFT),
 			  ((pse_stat[0] & WF_PSE_TOP_QUEUE_EMPTY_CPU_Q4_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_CPU_Q4_EMPTY_SHFT));
-	seq_printf(s, "\t\tHIF Q0/1/2/3/4/5/6/7/8/9/10/11/12/13 empty=%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d\n",
+	seq_printf(s, "\t\tHIF Q0/1/2/3/4/5/6/7/8 empty=%d/%d/%d/%d/%d/%d/%d/%d/%d\n",
 			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_0_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_0_EMPTY_SHFT),
 			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_1_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_1_EMPTY_SHFT),
 			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_2_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_2_EMPTY_SHFT),
@@ -3622,12 +3719,16 @@ mt7996_pseinfo_read(struct seq_file *s, void *data)
 			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_5_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_5_EMPTY_SHFT),
 			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_6_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_6_EMPTY_SHFT),
 			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_7_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_7_EMPTY_SHFT),
-			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_8_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_8_EMPTY_SHFT),
+			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_8_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_8_EMPTY_SHFT));
+	seq_printf(s, "\t\tHIF Q9/10/11/12/13/14/15/16 empty=%d/%d/%d/%d/%d/%d/%d/%d\n",
 			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_9_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_9_EMPTY_SHFT),
 			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_10_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_10_EMPTY_SHFT),
 			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_11_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_11_EMPTY_SHFT),
 			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_12_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_12_EMPTY_SHFT),
-			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_13_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_13_EMPTY_SHFT));
+			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_13_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_13_EMPTY_SHFT),
+			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_14_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_14_EMPTY_SHFT),
+			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_15_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_15_EMPTY_SHFT),
+			  ((pse_stat[1] & WF_PSE_TOP_QUEUE_EMPTY_1_HIF_16_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_1_HIF_16_EMPTY_SHFT));
 	seq_printf(s, "\t\tLMAC TX Q empty=%d\n",
 			  ((pse_stat[0] & WF_PSE_TOP_QUEUE_EMPTY_LMAC_TX_QUEUE_EMPTY_MASK) >> WF_PSE_TOP_QUEUE_EMPTY_LMAC_TX_QUEUE_EMPTY_SHFT));
 	seq_printf(s, "\t\tMDP TX Q0/Q1/Q2/RX Q empty=%d/%d/%d/%d\n",
@@ -3818,11 +3919,26 @@ static size_t
 ple_cr_num_of_ac(struct mt76_dev *dev)
 {
 	switch (mt76_chip(dev)) {
-	case 0x7990:
+	case MT7996_DEVICE_ID:
 		return CR_NUM_OF_AC_MT7996;
-	case 0x7992:
+	case MT7992_DEVICE_ID:
+	case MT7990_DEVICE_ID:
 	default:
 		return CR_NUM_OF_AC_MT7992;
+	}
+}
+
+static size_t
+ple_cr_num_of_twt(struct mt76_dev *dev)
+{
+	switch (mt76_chip(dev)) {
+	case MT7996_DEVICE_ID:
+		return CR_NUM_OF_TWT_MT7996;
+	case MT7990_DEVICE_ID:
+		return CR_NUM_OF_TWT_MT7990;
+	case MT7992_DEVICE_ID:
+	default:
+		return CR_NUM_OF_TWT_MT7992;
 	}
 }
 
@@ -3906,13 +4022,14 @@ mt7996_get_ple_acq_stat(struct mt7996_dev *dev, unsigned long *ple_stat)
 {
 	u32 i, addr;
 	size_t cr_num_of_ac = ple_cr_num_of_ac(&dev->mt76);
+	bool has_ext = is_mt7992(&dev->mt76) || is_mt7990(&dev->mt76);
 
 	ple_stat[0] = mt76_rr(dev, WF_PLE_TOP_QUEUE_EMPTY_ADDR);
 
 	/* Legacy */
 	addr = WF_PLE_TOP_AC0_QUEUE_EMPTY0_ADDR;
 	for (i = 1; i <= cr_num_of_ac; i++, addr += 4) {
-		if (i == cr_num_of_ac && is_mt7992(&dev->mt76))
+		if (i == cr_num_of_ac && has_ext)
 			ple_stat[i] = mt76_rr(dev, WF_PLE_TOP_AC0_QUEUE_EMPTY_EXT0_ADDR);
 		else
 			ple_stat[i] = mt76_rr(dev, addr);
@@ -3920,7 +4037,7 @@ mt7996_get_ple_acq_stat(struct mt7996_dev *dev, unsigned long *ple_stat)
 
 	addr = WF_PLE_TOP_AC1_QUEUE_EMPTY0_ADDR;
 	for (; i <= cr_num_of_ac * 2; i++, addr += 4) {
-		if (i == cr_num_of_ac * 2 && is_mt7992(&dev->mt76))
+		if (i == cr_num_of_ac * 2 && has_ext)
 			ple_stat[i] = mt76_rr(dev, WF_PLE_TOP_AC1_QUEUE_EMPTY_EXT0_ADDR);
 		else
 			ple_stat[i] = mt76_rr(dev, addr);
@@ -3928,7 +4045,7 @@ mt7996_get_ple_acq_stat(struct mt7996_dev *dev, unsigned long *ple_stat)
 
 	addr = WF_PLE_TOP_AC2_QUEUE_EMPTY0_ADDR;
 	for (; i <= cr_num_of_ac * 3; i++, addr += 4) {
-		if (i == cr_num_of_ac * 3 && is_mt7992(&dev->mt76))
+		if (i == cr_num_of_ac * 3 && has_ext)
 			ple_stat[i] = mt76_rr(dev, WF_PLE_TOP_AC2_QUEUE_EMPTY_EXT0_ADDR);
 		else
 			ple_stat[i] = mt76_rr(dev, addr);
@@ -3936,7 +4053,7 @@ mt7996_get_ple_acq_stat(struct mt7996_dev *dev, unsigned long *ple_stat)
 
 	addr = WF_PLE_TOP_AC3_QUEUE_EMPTY0_ADDR;
 	for (; i <= cr_num_of_ac * 4; i++, addr += 4) {
-		if (i == cr_num_of_ac * 4 && is_mt7992(&dev->mt76))
+		if (i == cr_num_of_ac * 4 && has_ext)
 			ple_stat[i] = mt76_rr(dev, WF_PLE_TOP_AC3_QUEUE_EMPTY_EXT0_ADDR);
 		else
 			ple_stat[i] = mt76_rr(dev, addr);
@@ -3948,6 +4065,8 @@ mt7996_get_sta_pause(struct mt7996_dev *dev, u8 band, u32 *sta_pause, u32 *twt_p
 {
 	u32 i, addr;
 	size_t cr_num_of_ac = ple_cr_num_of_ac(&dev->mt76);
+	size_t cr_num_of_twt = ple_cr_num_of_twt(&dev->mt76);
+	bool has_ext = is_mt7992(&dev->mt76) || is_mt7990(&dev->mt76);
 
 	/* switch to target band */
 	mt76_wr(dev, WF_DRR_TOP_SBRR_ADDR, u32_encode_bits(band, WF_DRR_TOP_SBRR_TARGET_BAND_MASK));
@@ -3955,7 +4074,7 @@ mt7996_get_sta_pause(struct mt7996_dev *dev, u8 band, u32 *sta_pause, u32 *twt_p
 	/* Legacy */
 	addr = WF_DRR_TOP_AC0_STATION_PAUSE00_ADDR;
 	for (i = 0; i < cr_num_of_ac; i++, addr += 4) {
-		if (i == cr_num_of_ac - 1 && is_mt7992(&dev->mt76))
+		if (i == cr_num_of_ac - 1 && has_ext)
 			sta_pause[i] = mt76_rr(dev, WF_DRR_TOP_AC0_STATION_PAUSE_EXT_00_ADDR);
 		else
 			sta_pause[i] = mt76_rr(dev, addr);
@@ -3963,7 +4082,7 @@ mt7996_get_sta_pause(struct mt7996_dev *dev, u8 band, u32 *sta_pause, u32 *twt_p
 
 	addr = WF_DRR_TOP_AC1_STATION_PAUSE00_ADDR;
 	for (; i < cr_num_of_ac * 2; i++, addr += 4) {
-		if (i == cr_num_of_ac * 2 - 1 && is_mt7992(&dev->mt76))
+		if (i == cr_num_of_ac * 2 - 1 && has_ext)
 			sta_pause[i] = mt76_rr(dev, WF_DRR_TOP_AC1_STATION_PAUSE_EXT_00_ADDR);
 		else
 			sta_pause[i] = mt76_rr(dev, addr);
@@ -3971,7 +4090,7 @@ mt7996_get_sta_pause(struct mt7996_dev *dev, u8 band, u32 *sta_pause, u32 *twt_p
 
 	addr = WF_DRR_TOP_AC2_STATION_PAUSE00_ADDR;
 	for (; i < cr_num_of_ac * 3; i++, addr += 4) {
-		if (i == cr_num_of_ac * 3 - 1 && is_mt7992(&dev->mt76))
+		if (i == cr_num_of_ac * 3 - 1 && has_ext)
 			sta_pause[i] = mt76_rr(dev, WF_DRR_TOP_AC2_STATION_PAUSE_EXT_00_ADDR);
 		else
 			sta_pause[i] = mt76_rr(dev, addr);
@@ -3979,7 +4098,7 @@ mt7996_get_sta_pause(struct mt7996_dev *dev, u8 band, u32 *sta_pause, u32 *twt_p
 
 	addr = WF_DRR_TOP_AC3_STATION_PAUSE00_ADDR;
 	for (; i < cr_num_of_ac * 4; i++, addr += 4) {
-		if (i == cr_num_of_ac * 4 - 1 && is_mt7992(&dev->mt76))
+		if (i == cr_num_of_ac * 4 - 1 && has_ext)
 			sta_pause[i] = mt76_rr(dev, WF_DRR_TOP_AC3_STATION_PAUSE_EXT_00_ADDR);
 		else
 			sta_pause[i] = mt76_rr(dev, addr);
@@ -3987,8 +4106,8 @@ mt7996_get_sta_pause(struct mt7996_dev *dev, u8 band, u32 *sta_pause, u32 *twt_p
 
 	/* TWT */
 	addr = WF_DRR_TOP_TWT_STA_MAP00_ADDR;
-	for (i = 0; i < cr_num_of_ac; i++, addr += 4) {
-		if (i == cr_num_of_ac - 1 && is_mt7992(&dev->mt76))
+	for (i = 0; i < cr_num_of_twt; i++, addr += 4) {
+		if (i == cr_num_of_twt - 1 && has_ext)
 			twt_pause[i] = mt76_rr(dev, WF_DRR_TOP_TWT_STA_MAP_EXT_00_ADDR);
 		else
 			twt_pause[i] = mt76_rr(dev, addr);
@@ -4021,6 +4140,7 @@ mt7996_show_sta_acq_info(struct seq_file *s, unsigned long *ple_stat,
 	struct mt7996_dev *dev = dev_get_drvdata(s->private);
 	size_t cr_num_of_ac = ple_cr_num_of_ac(&dev->mt76);
 	size_t cr_num_of_all_ac = cr_num_of_ac * IEEE80211_NUM_ACS;
+	size_t cr_num_of_twt = ple_cr_num_of_twt(&dev->mt76);
 	int i, j;
 
 	for (j = 0; j < cr_num_of_all_ac; j++) { /* show AC Q info */
@@ -4054,7 +4174,7 @@ mt7996_show_sta_acq_info(struct seq_file *s, unsigned long *ple_stat,
 				if (sta_pause[idx] & BIT(i))
 					ctrl = 2;
 
-				idx = wcid->phy_idx * cr_num_of_ac + j % cr_num_of_ac;
+				idx = wcid->phy_idx * cr_num_of_twt + j % cr_num_of_twt;
 				if (twt_sta_pause[idx] & BIT(i))
 					ctrl = 3;
 
@@ -4116,6 +4236,7 @@ mt7996_pleinfo_read(struct seq_file *s, void *data)
 	struct mt7996_dev *dev = dev_get_drvdata(s->private);
 	size_t cr_num_of_ac = ple_cr_num_of_ac(&dev->mt76);
 	size_t cr_num_of_all_ac = cr_num_of_ac * IEEE80211_NUM_ACS;
+	size_t cr_num_of_twt = ple_cr_num_of_twt(&dev->mt76);
 	u32 *sta_pause, *twt_sta_pause;
 	unsigned long *ple_stat;
 	int i, j, ret = 0;
@@ -4130,7 +4251,7 @@ mt7996_pleinfo_read(struct seq_file *s, void *data)
 		goto out;
 	}
 
-	twt_sta_pause = kzalloc(__MT_MAX_BAND * cr_num_of_ac * sizeof(u32), GFP_KERNEL);
+	twt_sta_pause = kzalloc(__MT_MAX_BAND * cr_num_of_twt * sizeof(u32), GFP_KERNEL);
 	if (!twt_sta_pause) {
 		ret = -ENOMEM;
 		goto out;
@@ -4143,7 +4264,7 @@ mt7996_pleinfo_read(struct seq_file *s, void *data)
 		if (dev->mt76.phys[i])
 			mt7996_get_sta_pause(dev, i,
 					     sta_pause + i * cr_num_of_all_ac,
-					     twt_sta_pause + i * cr_num_of_ac);
+					     twt_sta_pause + i * cr_num_of_twt);
 	}
 
 	if ((ple_stat[0] & WF_PLE_TOP_QUEUE_EMPTY_ALL_AC_EMPTY_MASK) == 0) {
@@ -4466,8 +4587,9 @@ void mt7996_mtk_init_dev_debugfs(struct mt7996_dev *dev, struct dentry *dir)
 	u32 device_id = (dev->mt76.rev) >> 16;
 	int i = 0;
 	static const struct mt7996_dbg_reg_desc dbg_reg_s[] = {
-		{ 0x7990, mt7996_dbg_offs },
-		{ 0x7992, mt7992_dbg_offs },
+		{ MT7996_DEVICE_ID, mt7996_dbg_offs },
+		{ MT7992_DEVICE_ID, mt7992_dbg_offs },
+		{ MT7990_DEVICE_ID, mt7990_dbg_offs },
 	};
 
 	for (i = 0; i < ARRAY_SIZE(dbg_reg_s); i++) {
@@ -4481,10 +4603,12 @@ void mt7996_mtk_init_dev_debugfs(struct mt7996_dev *dev, struct dentry *dir)
 		WTBL_LMAC_DW2 = WTBL_LMAC_DW2_7996;
 		WTBL_LMAC_DW5 = WTBL_LMAC_DW5_7996;
 		WTBL_LMAC_DW9 = WTBL_LMAC_DW9_7996;
+		WTBL_LMAC_DW35 = WTBL_LMAC_DW35_7996;
 	} else {
 		WTBL_LMAC_DW2 = WTBL_LMAC_DW2_7992;
 		WTBL_LMAC_DW5 = WTBL_LMAC_DW5_7992;
 		WTBL_LMAC_DW9 = WTBL_LMAC_DW9_7992;
+		WTBL_LMAC_DW35 = WTBL_LMAC_DW35_7992;
 	}
 
 	/* amsdu */
