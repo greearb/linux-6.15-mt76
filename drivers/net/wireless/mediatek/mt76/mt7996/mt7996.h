@@ -771,6 +771,7 @@ struct mt7996_phy {
 	bool sr_enable:1;
 	bool enhanced_sr_enable:1;
 	bool thermal_protection_enable:1;
+	bool mru_probe_enable:1;
 #endif
 	/* Index 0 (TxBSS) is not used */
         struct mt7996_vif_link __rcu *mbssid_conf[MT7996_MAX_MBSSID];
@@ -1496,6 +1497,9 @@ void mt7996_dump_bmac_txd_info(struct seq_file *s, struct mt7996_dev *dev,
 int mt7996_mtk_init_dev_debugfs_internal(struct mt7996_phy *phy, struct dentry *dir);
 int mt7996_mtk_init_band_debugfs_internal(struct mt7996_phy *phy, struct dentry *dir);
 int mt7996_mcu_mlo_agc(struct mt7996_dev *dev, const void *data, int len);
+int mt7996_mcu_set_sr_pp_en(struct mt7996_dev *dev, u8 enable);
+int mt7996_mcu_set_uba_en(struct mt7996_dev *dev, u8 enable);
+int mt7996_mcu_set_mru_probe_en(struct mt7996_phy *phy);
 #endif
 
 int mt7996_dma_rro_init(struct mt7996_dev *dev);
