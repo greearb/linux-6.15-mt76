@@ -9,7 +9,10 @@
 void mt76_wed_release_rx_buf(struct mtk_wed_device *wed)
 {
 	struct mt76_dev *dev = container_of(wed, struct mt76_dev, mmio.wed);
+#if 0
+	/* Todo: Check wether it is necessary in kernel 6.6 */
 	//struct page *page;
+#endif
 	int i;
 
 	for (i = 0; i < dev->rx_token_size; i++) {
@@ -31,6 +34,7 @@ void mt76_wed_release_rx_buf(struct mtk_wed_device *wed)
 	/* BEN:  Won't compile, needs out-of-tree WED patches from owrt backports or something.
 	 * We don't use WED on x86 anyway.
 	 */
+	/* Todo: Check wether it is necessary in kernel 6.6 */
 	mt76_for_each_q_rx(dev, i) {
 		struct mt76_queue *q = &dev->q_rx[i];
 

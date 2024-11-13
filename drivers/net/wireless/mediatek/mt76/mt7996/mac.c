@@ -1789,6 +1789,7 @@ void mt7996_rro_msdu_pg_free(struct mt7996_dev *dev)
 	mt7996_free_pg_addr(dev);
 
 #if 0 // TODO:  wed rx_page won't compile.
+	/* Todo: Check wether it is necessary in kernel 6.6 */
 	mt76_for_each_q_rx(&dev->mt76, i) {
 		struct mt76_queue *q = &dev->mt76.q_rx[i];
 		struct page *page;
@@ -1808,7 +1809,10 @@ void mt7996_rro_msdu_pg_free(struct mt7996_dev *dev)
 void mt7996_rx_token_put(struct mt7996_dev *dev)
 {
 	struct mt76_queue *q;
-	//struct page *page;
+#if 0
+	/* Todo: Check wether it is necessary in kernel 6.6 */
+	struct page *page;
+#endif
 	int i;
 
 	for (i = 0; i < dev->mt76.rx_token_size; i++) {
@@ -1830,6 +1834,7 @@ void mt7996_rx_token_put(struct mt7996_dev *dev)
 	}
 
 #if 0 // TODO:  wed rx_page won't compile.
+	/* Todo: Check wether it is necessary in kernel 6.6 */
 	mt76_for_each_q_rx(&dev->mt76, i) {
 		struct mt76_queue *q = &dev->mt76.q_rx[i];
 
@@ -1842,9 +1847,9 @@ void mt7996_rx_token_put(struct mt7996_dev *dev)
 			memset(&q->rx_page, 0, sizeof(q->rx_page));
 		}
 	}
-#endif
 
 	mt76_free_pending_rxwi(&dev->mt76);
+#endif
 }
 
 int mt7996_rro_fill_msdu_page(struct mt76_dev *mdev, struct mt76_queue *q,
