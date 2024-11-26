@@ -290,6 +290,13 @@ enum {
 	MT7996_RRO_ALL_BYPASS,
 };
 
+enum mt7996_sta_chsw_state {
+	MT7996_STA_CHSW_IDLE,
+	MT7996_STA_CHSW_PAUSE_TX,
+	MT7996_STA_CHSW_RESUME_TX,
+	MT7996_STA_CHSW_TIMEOUT,
+};
+
 struct mt7996_twt_flow {
 	struct list_head list;
 	u64 start_tsf;
@@ -450,6 +457,12 @@ struct mt7996_vif_link {
 	u8 mbssid_idx;
 
 	s64 tsf_offset[IEEE80211_MLD_MAX_NUM_LINKS];
+
+	/* sta channel switch */
+	struct delayed_work sta_chsw_work;
+	enum mt7996_sta_chsw_state state;
+	enum mt7996_sta_chsw_state next_state;
+	u32 pause_timeout;
 };
 
 struct mt7996_vif {
@@ -472,6 +485,9 @@ struct mt7996_vif {
 	void *probe[__MT_MAX_BAND];
 	unsigned long probe_send_time[__MT_MAX_BAND];
 	int probe_send_count[__MT_MAX_BAND];
+
+	/* sta channel switch */
+	u16 tx_paused_links;
 
 	/* QoS map support */
 	u8 qos_map[IP_DSCP_NUM];
@@ -1092,6 +1108,30 @@ mt7996_vif_conf_link(struct mt7996_dev *dev, struct ieee80211_vif *vif,
 	for (int __i = 0; __i < ARRAY_SIZE((dev)->radio_phy); __i++)	\
 		if (((phy) = (dev)->radio_phy[__i]) != NULL)
 
+static inline void
+mt7996_get_merged_ttlm(struct ieee80211_vif *vif,
+		       struct ieee80211_neg_ttlm *merged_ttlm)
+{
+	u16 map = vif->valid_links;
+	int tid;
+
+	if (vif->neg_ttlm.valid) {
+		memcpy(merged_ttlm->downlink, vif->neg_ttlm.downlink,
+		       sizeof(merged_ttlm->downlink));
+		memcpy(merged_ttlm->uplink, vif->neg_ttlm.uplink,
+		       sizeof(merged_ttlm->uplink));
+		return;
+	}
+
+	if (vif->adv_ttlm.active)
+		map &= vif->adv_ttlm.map;
+
+	for (tid = 0; tid < IEEE80211_TTLM_NUM_TIDS; tid++) {
+		merged_ttlm->downlink[tid] = map;
+		merged_ttlm->uplink[tid] = map;
+	}
+}
+
 extern const struct ieee80211_ops mt7996_ops;
 extern struct pci_driver mt7996_pci_driver;
 extern struct pci_driver mt7996_hif_driver;
@@ -1372,6 +1412,7 @@ int mt7996_rro_fill_msdu_page(struct mt76_dev *mdev, struct mt76_queue *q,
 bool mt7996_rx_check(struct mt76_dev *mdev, void *data, int len);
 void mt7996_stats_work(struct work_struct *work);
 void mt7996_beacon_mon_work(struct work_struct *work);
+void mt7996_sta_chsw_work(struct work_struct *work);
 int mt76_dfs_start_rdd(struct mt7996_dev *dev, bool force);
 int mt7996_dfs_init_radar_detector(struct mt7996_phy *phy);
 void mt7996_set_stream_he_eht_caps(struct mt7996_phy *phy);
