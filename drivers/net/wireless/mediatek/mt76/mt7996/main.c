@@ -1085,8 +1085,6 @@ mt7996_channel_switch_beacon(struct ieee80211_hw *hw,
 			     struct ieee80211_vif *vif,
 			     struct cfg80211_chan_def *chandef)
 {
-#if 0
-	//Buggy, won't compile, subsequent patch fixes it I guess. --Ben
 	struct mt7996_dev *dev = mt7996_hw_dev(hw);
 	struct mt7996_vif *mvif = (struct mt7996_vif *)vif->drv_priv;
 	struct mt7996_phy *phy = mt7996_band_phy(dev, chandef->chan->band);
@@ -1132,7 +1130,6 @@ fail:
 	mvif->cs_link_id = IEEE80211_LINK_UNSPECIFIED;
 	dev_err(dev->mt76.dev, "link %d: failed to switch beacon\n", link_id);
 	mutex_unlock(&dev->mt76.mutex);
-#endif
 }
 
 static int
