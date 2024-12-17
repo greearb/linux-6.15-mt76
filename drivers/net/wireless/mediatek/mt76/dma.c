@@ -203,7 +203,7 @@ void __mt76_dma_queue_reset(struct mt76_dev *dev, struct mt76_queue *q,
 	if (!q || !q->ndesc)
 		return;
 
-	if (!mt76_queue_is_wed_rro_ind(q)) {
+	if (!mt76_queue_is_wed_rro_ind(q) && !mt76_queue_is_wed_rro_rxdmad_c(q)) {
 		int i;
 
 		/* clear descriptors */
@@ -239,6 +239,9 @@ mt76_dma_add_rx_buf(struct mt76_dev *dev, struct mt76_queue *q,
 
 		rro_desc = (struct mt76_wed_rro_desc *)q->desc;
 		data = &rro_desc[q->head];
+		goto done;
+	} else if (mt76_queue_is_wed_rro_rxdmad_c(q)) {
+		data = &q->desc[q->head];
 		goto done;
 	}
 
@@ -503,11 +506,16 @@ mt76_dma_get_buf(struct mt76_dev *dev, struct mt76_queue *q, int idx,
 		t->dma_addr = 0;
 		t->ptr = NULL;
 
-		if (drop) {
+		mt76_put_rxwi(dev, t);
+		/* only wed v2 rx path handle by wo */
+		/* TODO:  Needs eth level patch for this to compile.
+		 *  x86-64 doesn't support WED anyway. --Ben
+		if (drop && dev->mmio.wed.version == MTK_WED_HW_V2) {
 			*drop |= !!(buf1 & MT_DMA_CTL_WO_DROP);
 			if (buf1 & MT_DMA_CTL_WO_DROP)
 				q->rx_drop[MT_RX_DROP_DMAD_WO_FRAG]++;
 		}
+		*/
 	} else {
 		dma_sync_single_for_cpu(dev->dma_dev, e->dma_addr[0],
 				SKB_WITH_OVERHEAD(q->buf_size),
@@ -530,7 +538,8 @@ mt76_dma_dequeue(struct mt76_dev *dev, struct mt76_queue *q, bool flush,
 		return NULL;
 
 	if (mt76_queue_is_wed_rro_data(q) ||
-	    mt76_queue_is_wed_rro_msdu_pg(q))
+	    mt76_queue_is_wed_rro_msdu_pg(q) ||
+	    mt76_queue_is_wed_rro_rxdmad_c(q))
 		goto done;
 
 	if (mt76_queue_is_wed_rro_ind(q)) {
@@ -723,7 +732,7 @@ int mt76_dma_rx_fill_buf(struct mt76_dev *dev, struct mt76_queue *q,
 		int offset;
 		void *buf = NULL;
 
-		if (mt76_queue_is_wed_rro_ind(q))
+		if (mt76_queue_is_wed_rro_ind(q) || mt76_queue_is_wed_rro_rxdmad_c(q))
 			goto done;
 
 		buf = mt76_get_page_pool_buf(q, &offset, q->buf_size);
@@ -863,7 +872,7 @@ mt76_dma_rx_reset(struct mt76_dev *dev, enum mt76_rxq_id qid)
 	if (!q->ndesc)
 		return;
 
-	if (!mt76_queue_is_wed_rro_ind(q)) {
+	if (!mt76_queue_is_wed_rro_ind(q) && !mt76_queue_is_wed_rro_rxdmad_c(q)) {
 		int i;
 
 		for (i = 0; i < q->ndesc; i++)
