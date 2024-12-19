@@ -1045,10 +1045,10 @@ mt7996_band_valid(struct mt7996_dev *dev, u8 band)
 static inline bool
 mt7996_radio_valid(struct mt7996_dev *dev, u8 radio)
 {
-        if (radio >= dev->mt76.hw->wiphy->n_radio ||
-            !dev->radio_phy[radio])
-                return false;
-        return true;
+	if (radio >= dev->mt76.hw->wiphy->n_radio ||
+	    !dev->radio_phy[radio])
+		return false;
+	return true;
 }
 
 static inline bool
