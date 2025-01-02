@@ -166,7 +166,7 @@ struct mt7996_mcu_eeprom_update {
 
 	__le16 tag;
 	__le16 len;
-	u8 buffer_mode;
+	u8 buffer_mode;		/* bit 0: efuse or buffer mode, bit 1: has patch back */
 	u8 format;
 	__le16 buf_len;
 } __packed;
@@ -206,6 +206,16 @@ struct mt7996_mcu_eeprom_access_event {
 	__le32 type;
 	__le32 rsv[4];
 	union eeprom_data eeprom;
+} __packed;
+
+struct mt7996_mcu_eeprom_patch {
+	__le16 tag;
+	__le16 len;
+	__le16 adie_offset;
+	__le16 eep_offset;
+	__le16 count;
+	bool complete;
+	u8 rsv;
 } __packed;
 
 struct mt7996_mcu_phy_rx_info {

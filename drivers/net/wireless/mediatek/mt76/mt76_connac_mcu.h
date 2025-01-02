@@ -1162,6 +1162,9 @@ enum {
 	EE_MODE_BUFFER,
 };
 
+#define EE_MODE					BIT(0)
+#define EE_PATCH_BACK				BIT(1)
+
 enum {
 	EE_FORMAT_BIN,
 	EE_FORMAT_WHOLE,

@@ -5542,10 +5542,13 @@ static int mt7996_mcu_set_cal_free_data(struct mt7996_dev *dev)
 	static const u16 adie_base_7990[] = {
 		EFUSE_BASE_OFFS_ADIE0, 0x0, 0x0
 	};
+	struct mt7996_mcu_eeprom_patch *patch;
+	struct uni_header hdr = {};
 	static const u16 *adie_offs[__MT_MAX_BAND];
 	static const u16 *eep_offs[__MT_MAX_BAND];
 	static const u16 *adie_base;
-	int adie_id, band, i, ret;
+	int msg_len, adie_id, band, i;
+	struct sk_buff *skb;
 
 	switch (mt76_chip(&dev->mt76)) {
 	case MT7996_DEVICE_ID:
@@ -5603,48 +5606,44 @@ static int mt7996_mcu_set_cal_free_data(struct mt7996_dev *dev)
 		return -EINVAL;
 	}
 
+	msg_len = sizeof(hdr) + sizeof(*patch) * __MT_MAX_BAND * MT_EE_CAL_FREE_MAX_SIZE;
+	skb = mt76_mcu_msg_alloc(&dev->mt76, NULL, msg_len);
+	if (!skb)
+		return -ENOMEM;
+
+	skb_put_data(skb, &hdr, sizeof(hdr));
+
 	for (band = 0; band < __MT_MAX_BAND; band++) {
-		struct {
-			/* fixed field */
-			u8 __rsv[4];
-
-			__le16 tag;
-			__le16 len;
-			__le16 adie_offset;
-			__le16 eep_offset;
-			__le16 count;
-			u8 rsv[2];
-		} __packed req = {
-			.tag = cpu_to_le16(UNI_EFUSE_PATCH),
-			.len = cpu_to_le16(sizeof(req) - 4),
-			.count = cpu_to_le16(1),
-		};
-		u16 adie_offset, eep_offset;
-
 		if (!adie_offs[band])
 			continue;
 
 		for (i = 0; i < MT_EE_CAL_FREE_MAX_SIZE; i++) {
-			adie_offset = adie_offs[band][i] + adie_base[band];
-			eep_offset = eep_offs[band][i];
+			u16 adie_offset, eep_offset;
+			struct tlv *tlv;
 
 			if (adie_offs[band][i] == MT_EE_END_OFFSET)
 				break;
+
+			adie_offset = adie_offs[band][i] + adie_base[band];
+			eep_offset = eep_offs[band][i];
 
 			if (is_mt7996(&dev->mt76) && dev->var.type == MT7996_VAR_TYPE_444 &&
 			    band == MT_BAND1)
 				eep_offset -= MT_EE_7977BN_OFFSET;
 
-			req.eep_offset = cpu_to_le16(eep_offset);
-			req.adie_offset = cpu_to_le16(adie_offset);
-			ret = mt76_mcu_send_msg(&dev->mt76, MCU_WM_UNI_CMD(EFUSE_CTRL),
-						&req, sizeof(req), true);
-			if (ret)
-				return ret;
+			tlv = mt7996_mcu_add_uni_tlv(skb, UNI_EFUSE_PATCH, sizeof(*patch));
+			patch = (struct mt7996_mcu_eeprom_patch *)tlv;
+			patch->adie_offset = cpu_to_le16(adie_offset);
+			patch->eep_offset = cpu_to_le16(eep_offset);
+			patch->count = cpu_to_le16(1);
 		}
 	}
 
-	return 0;
+	/* add the complete flag for the last tlv to trigger buffer mode actions in firmware */
+	patch->complete = true;
+
+	return mt76_mcu_skb_send_msg(&dev->mt76, skb,
+				     MCU_WM_UNI_CMD(EFUSE_CTRL), true);
 }
 
 int mt7996_mcu_set_eeprom_flash(struct mt7996_dev *dev)
@@ -5654,7 +5653,7 @@ int mt7996_mcu_set_eeprom_flash(struct mt7996_dev *dev)
 #define PER_PAGE_SIZE		0x400
 	struct mt7996_mcu_eeprom_update req = {
 		.tag = cpu_to_le16(UNI_EFUSE_BUFFER_MODE),
-		.buffer_mode = EE_MODE_BUFFER
+		.buffer_mode = EE_MODE_BUFFER | EE_PATCH_BACK,
 	};
 	u16 eeprom_size = MT7996_EEPROM_SIZE;
 	u8 total = DIV_ROUND_UP(eeprom_size, PER_PAGE_SIZE);
@@ -5697,7 +5696,7 @@ int mt7996_mcu_set_eeprom(struct mt7996_dev *dev)
 	struct mt7996_mcu_eeprom_update req = {
 		.tag = cpu_to_le16(UNI_EFUSE_BUFFER_MODE),
 		.len = cpu_to_le16(sizeof(req) - 4),
-		.buffer_mode = EE_MODE_EFUSE,
+		.buffer_mode = EE_MODE_EFUSE | EE_PATCH_BACK,
 		.format = EE_FORMAT_WHOLE
 	};
 	int ret;
