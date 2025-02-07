@@ -121,7 +121,7 @@ static void mt7996_stop_phy(struct mt7996_phy *phy)
 {
 	struct mt7996_dev *dev = phy->dev;
 
-	if (!phy || !test_bit(MT76_STATE_RUNNING, &phy->mt76->state))
+	if (!test_bit(MT76_STATE_RUNNING, &phy->mt76->state))
 		return;
 
 	cancel_delayed_work_sync(&phy->mt76->mac_work);
@@ -471,9 +471,6 @@ static void mt7996_phy_set_rxfilter(struct mt7996_phy *phy)
 static void mt7996_set_monitor(struct mt7996_phy *phy, bool enabled)
 {
 	struct mt7996_dev *dev = phy->dev;
-
-	if (!phy)
-		return;
 
 	if (enabled == !(phy->rxfilter & MT_WF_RFCR_DROP_OTHER_UC))
 		return;
