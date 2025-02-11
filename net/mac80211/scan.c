@@ -574,17 +574,19 @@ static int ieee80211_start_sw_scan(struct ieee80211_local *local,
 u32 ieee80211_scan_req_radio_mask(struct ieee80211_local *local,
 				  struct cfg80211_scan_request *req)
 {
-	struct cfg80211_chan_def chandef = {};
 	const struct wiphy_radio *radio;
 	u32 mask = 0;
 	int i, r;
 
-	chandef.width = NL80211_CHAN_WIDTH_20_NOHT;
 	for (r = 0; r < local->hw.wiphy->n_radio; r++) {
 		radio = &local->hw.wiphy->radio[r];
 
 		for (i = 0; i < req->n_channels; i++) {
+			struct cfg80211_chan_def chandef = {};
+
 			chandef.chan = req->channels[i];
+			cfg80211_chandef_create(&chandef, req->channels[i],
+						NL80211_CHAN_NO_HT);
 			if (!cfg80211_radio_chandef_valid(radio, &chandef))
 				continue;
 
