@@ -168,6 +168,31 @@ void ieee80211_offchannel_return(struct ieee80211_local *local)
 					false);
 }
 
+u32 ieee80211_offchannel_radio_mask(struct ieee80211_local *local)
+{
+	struct cfg80211_chan_def chandef = {};
+	const struct wiphy_radio *radio;
+	struct ieee80211_roc_work *roc;
+	u32 mask = 0;
+	int r;
+
+	chandef.width = NL80211_CHAN_WIDTH_20_NOHT;
+	for (r = 0; r < local->hw.wiphy->n_radio; r++) {
+		radio = &local->hw.wiphy->radio[r];
+
+		list_for_each_entry(roc, &local->roc_list, list) {
+			chandef.chan = roc->chan;
+			if (!cfg80211_radio_chandef_valid(radio, &chandef))
+				continue;
+
+			mask |= BIT(r);
+			break;
+		}
+	}
+
+	return mask;
+}
+
 static void ieee80211_roc_notify_destroy(struct ieee80211_roc_work *roc)
 {
 	/* was never transmitted */
@@ -566,7 +591,12 @@ static int ieee80211_start_roc_work(struct ieee80211_local *local,
 				    enum ieee80211_roc_type type)
 {
 	struct ieee80211_roc_work *roc, *tmp;
+	struct cfg80211_chan_def chandef = {
+		.width = NL80211_CHAN_WIDTH_20_NOHT,
+		.chan = channel
+	};
 	bool queued = false, combine_started = true;
+	u32 radio_mask;
 	int ret;
 
 	lockdep_assert_wiphy(local->hw.wiphy);
@@ -612,9 +642,11 @@ static int ieee80211_start_roc_work(struct ieee80211_local *local,
 		roc->mgmt_tx_cookie = *cookie;
 	}
 
+	radio_mask = ieee80211_chandef_radio_mask(local, &chandef);
+
 	/* if there's no need to queue, handle it immediately */
 	if (list_empty(&local->roc_list) &&
-	    !local->scanning && !ieee80211_is_radar_required(local)) {
+	    !local->scanning && !ieee80211_is_radar_required(local, radio_mask)) {
 		/* if not HW assist, just queue & schedule work */
 		if (!local->ops->remain_on_channel) {
 			list_add_tail(&roc->list, &local->roc_list);
