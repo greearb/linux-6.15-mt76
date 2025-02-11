@@ -1964,6 +1964,8 @@ int ieee80211_mesh_finish_csa(struct ieee80211_sub_if_data *sdata,
 			      u64 *changed);
 
 /* scan/BSS handling */
+u32 ieee80211_scan_req_radio_mask(struct ieee80211_local *local,
+				  struct cfg80211_scan_request *req);
 void ieee80211_scan_work(struct wiphy *wiphy, struct wiphy_work *work);
 int ieee80211_request_ibss_scan(struct ieee80211_sub_if_data *sdata,
 				const u8 *ssid, u8 ssid_len,
@@ -2002,6 +2004,7 @@ void ieee80211_sched_scan_stopped_work(struct wiphy *wiphy,
 /* off-channel/mgmt-tx */
 void ieee80211_offchannel_stop_vifs(struct ieee80211_local *local);
 void ieee80211_offchannel_return(struct ieee80211_local *local);
+u32 ieee80211_offchannel_radio_mask(struct ieee80211_local *local);
 void ieee80211_roc_setup(struct ieee80211_local *local);
 void ieee80211_start_next_roc(struct ieee80211_local *local);
 void ieee80211_reconfig_roc(struct ieee80211_local *local);
@@ -2650,6 +2653,8 @@ bool ieee80211_chandef_s1g_oper(const struct ieee80211_s1g_oper_ie *oper,
 				struct cfg80211_chan_def *chandef);
 void ieee80211_chandef_downgrade(struct cfg80211_chan_def *chandef,
 				 struct ieee80211_conn_settings *conn);
+u32 ieee80211_chandef_radio_mask(struct ieee80211_local *local,
+				 struct cfg80211_chan_def *chandef);
 static inline void
 ieee80211_chanreq_downgrade(struct ieee80211_chan_req *chanreq,
 			    struct ieee80211_conn_settings *conn)
@@ -2706,7 +2711,7 @@ void ieee80211_recalc_chanctx_min_def(struct ieee80211_local *local,
 				      struct ieee80211_chanctx *ctx,
 				      struct ieee80211_link_data *rsvd_for,
 				      bool check_reserved);
-bool ieee80211_is_radar_required(struct ieee80211_local *local);
+bool ieee80211_is_radar_required(struct ieee80211_local *local, u32 radio_mask);
 
 void ieee80211_dfs_cac_timer_work(struct wiphy *wiphy, struct wiphy_work *work);
 void ieee80211_dfs_cac_cancel(struct ieee80211_local *local,

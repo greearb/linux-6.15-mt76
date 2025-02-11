@@ -3550,6 +3550,27 @@ static int ieee80211_set_bitrate_mask(struct wiphy *wiphy,
 	return 0;
 }
 
+static bool ieee80211_radar_detection_busy(struct ieee80211_local *local,
+					   struct ieee80211_chan_req *chanreq)
+{
+	struct cfg80211_scan_request *scan_req;
+	struct wiphy *wiphy = local->hw.wiphy;
+	u32 mask;
+
+	if (list_empty(&local->roc_list) && !local->scanning)
+		return false;
+
+	if (!wiphy->n_radio)
+		return true;
+
+	mask = ieee80211_offchannel_radio_mask(local);
+	scan_req = wiphy_dereference(wiphy, local->scan_req);
+	if (scan_req)
+		mask |= ieee80211_scan_req_radio_mask(local, scan_req);
+
+	return mask & ieee80211_chandef_radio_mask(local, &chanreq->oper);
+}
+
 static int ieee80211_start_radar_detection(struct wiphy *wiphy,
 					   struct net_device *dev,
 					   struct cfg80211_chan_def *chandef,
@@ -3563,7 +3584,7 @@ static int ieee80211_start_radar_detection(struct wiphy *wiphy,
 
 	lockdep_assert_wiphy(local->hw.wiphy);
 
-	if (!list_empty(&local->roc_list) || local->scanning)
+	if (ieee80211_radar_detection_busy(local, &chanreq))
 		return -EBUSY;
 
 	link_data = sdata_dereference(sdata->link[link_id], sdata);
