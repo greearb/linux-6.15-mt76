@@ -3550,8 +3550,8 @@ static int ieee80211_set_bitrate_mask(struct wiphy *wiphy,
 	return 0;
 }
 
-static bool ieee80211_radar_detection_busy(struct ieee80211_local *local,
-					   struct ieee80211_chan_req *chanreq)
+static bool ieee80211_scanning_busy(struct ieee80211_local *local,
+				    struct ieee80211_chan_req *chanreq)
 {
 	struct cfg80211_scan_request *scan_req;
 	struct wiphy *wiphy = local->hw.wiphy;
@@ -3584,7 +3584,7 @@ static int ieee80211_start_radar_detection(struct wiphy *wiphy,
 
 	lockdep_assert_wiphy(local->hw.wiphy);
 
-	if (ieee80211_radar_detection_busy(local, &chanreq))
+	if (ieee80211_scanning_busy(local, &chanreq))
 		return -EBUSY;
 
 	link_data = sdata_dereference(sdata->link[link_id], sdata);
@@ -4165,7 +4165,7 @@ __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 
 	lockdep_assert_wiphy(local->hw.wiphy);
 
-	if (!list_empty(&local->roc_list) || local->scanning)
+	if (ieee80211_scanning_busy(local, &chanreq))
 		return -EBUSY;
 
 	if (WARN_ON(link_id >= IEEE80211_MLD_MAX_NUM_LINKS))
