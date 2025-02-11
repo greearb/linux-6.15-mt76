@@ -895,6 +895,7 @@ u32 ieee80211_chandef_radio_mask(struct ieee80211_local *local,
 	int i;
 
 	for (i = 0; i < wiphy->n_radio; i++) {
+		radio = &wiphy->radio[i];
 		if (cfg80211_radio_chandef_valid(radio, chandef))
 			mask |= BIT(i);
 	}
