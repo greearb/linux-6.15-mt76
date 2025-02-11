@@ -181,6 +181,9 @@ u32 ieee80211_offchannel_radio_mask(struct ieee80211_local *local)
 		list_for_each_entry(roc, &local->roc_list, list) {
 			struct cfg80211_chan_def chandef = {};
 
+			if (!roc->started)
+				continue;
+
 			cfg80211_chandef_create(&chandef, roc->chan,
 						NL80211_CHAN_NO_HT);
 			if (!cfg80211_radio_chandef_valid(radio, &chandef))
