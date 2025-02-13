@@ -598,8 +598,8 @@ u32 ieee80211_scan_req_radio_mask(struct ieee80211_local *local,
 	return mask;
 }
 
-static bool __ieee80211_can_leave_ch(struct ieee80211_sub_if_data *sdata,
-				     u32 radio_mask)
+bool ieee80211_can_leave_ch(struct ieee80211_sub_if_data *sdata,
+			    u32 radio_mask)
 {
 	struct ieee80211_local *local = sdata->local;
 	struct ieee80211_sub_if_data *sdata_iter;
@@ -671,7 +671,7 @@ void ieee80211_run_deferred_scan(struct ieee80211_local *local)
 
 	radio_mask = ieee80211_scan_req_radio_mask(local, req);
 	sdata = wiphy_dereference(local->hw.wiphy, local->scan_sdata);
-	if (!__ieee80211_can_leave_ch(sdata, radio_mask))
+	if (!ieee80211_can_leave_ch(sdata, radio_mask))
 		return;
 
 	if (!ieee80211_can_scan(local, sdata, radio_mask))
@@ -773,7 +773,7 @@ static int __ieee80211_start_scan(struct ieee80211_sub_if_data *sdata,
 		return -EINVAL;
 
 	radio_mask = ieee80211_scan_req_radio_mask(local, req);
-	if (!__ieee80211_can_leave_ch(sdata, radio_mask))
+	if (!ieee80211_can_leave_ch(sdata, radio_mask))
 		return -EBUSY;
 
 	if (!ieee80211_can_scan(local, sdata, radio_mask)) {
