@@ -609,6 +609,12 @@ static int ieee80211_start_roc_work(struct ieee80211_local *local,
 	if (!local->emulate_chanctx && !local->ops->remain_on_channel)
 		return -EOPNOTSUPP;
 
+	cfg80211_chandef_create(&chandef, channel, NL80211_CHAN_NO_HT);
+	radio_mask = ieee80211_chandef_radio_mask(local, &chandef);
+	if (!ieee80211_can_leave_ch(sdata, radio_mask) &&
+	    !ieee80211_scanning_busy(local, &chandef))
+		return -EBUSY;
+
 	roc = kzalloc(sizeof(*roc), GFP_KERNEL);
 	if (!roc)
 		return -ENOMEM;
@@ -643,12 +649,8 @@ static int ieee80211_start_roc_work(struct ieee80211_local *local,
 		roc->mgmt_tx_cookie = *cookie;
 	}
 
-	cfg80211_chandef_create(&chandef, channel, NL80211_CHAN_NO_HT);
-	radio_mask = ieee80211_chandef_radio_mask(local, &chandef);
-
 	/* if there's no need to queue, handle it immediately */
-	if (list_empty(&local->roc_list) &&
-	    !local->scanning && !ieee80211_is_radar_required(local, radio_mask)) {
+	if (list_empty(&local->roc_list) && !local->scanning) {
 		/* if not HW assist, just queue & schedule work */
 		if (!local->ops->remain_on_channel) {
 			list_add_tail(&roc->list, &local->roc_list);
