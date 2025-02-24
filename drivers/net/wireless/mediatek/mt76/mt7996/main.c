@@ -638,6 +638,9 @@ int mt7996_set_channel(struct mt76_phy *mphy)
 		if (ret)
 			goto out;
 	} else if (mphy->chanctx && mphy->chanctx->state == MT76_CHANCTX_STATE_SWITCH) {
+		u8 delta;
+		int current_txpower;
+
 		if (mphy->chanctx->has_ap && phy->pp_mode == PP_USR_MODE) {
 			ret = mt7996_mcu_set_pp_en(phy, PP_USR_MODE,
 						   mphy->main_chandef.punctured);
@@ -647,6 +650,14 @@ int mt7996_set_channel(struct mt76_phy *mphy)
 			ret = mt7996_mcu_set_pp_sta_dscb(phy, &mphy->main_chandef,
 							 omac_idx);
 		}
+		if (ret)
+			goto out;
+
+		delta = mt76_tx_power_path_delta(hweight16(mphy->chainmask));
+		current_txpower = DIV_ROUND_UP(mphy->txpower_cur + delta, 2);
+		ret = mt7996_mcu_set_txpower_sku(phy, current_txpower);
+		if (ret)
+			goto out;
 	}
 
 	if (phy->dev->cal) {
@@ -665,10 +676,6 @@ int mt7996_set_channel(struct mt76_phy *mphy)
 		goto out;
 
 	ret = mt7996_mcu_set_chan_info(phy, UNI_CHANNEL_RX_PATH, false);
-	if (ret)
-		goto out;
-
-	ret = 0; // TODO:  Broken mt7996_mcu_set_txpower_sku(phy, current_txpower);
 	if (ret)
 		goto out;
 
