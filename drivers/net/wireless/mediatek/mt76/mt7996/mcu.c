@@ -452,7 +452,7 @@ mt7996_mcu_rx_radar_detected(struct mt7996_dev *dev, struct sk_buff *skb)
 	if (!mphy)
 		return;
 
-	if (r->rdd_idx == MT_RDD_IDX_BACKGROUND)
+	if (r->rdd_idx == MT_RDD_IDX_BACKGROUND) {
 		dev->bg_nxt_freq = 0;
 		cfg80211_background_radar_event(mphy->hw->wiphy,
 						&dev->rdd2_chandef,
@@ -6770,7 +6770,7 @@ int mt7996_mcu_rdd_background_disable_timer(struct mt7996_dev *dev, bool disable
 		.tag = cpu_to_le16(UNI_RDD_CTRL_PARM),
 		.len = cpu_to_le16(sizeof(req) - 4),
 		.ctrl = RDD_DISABLE_ZW_TIMER,
-		.rdd_idx = MT_RX_SEL2,
+		.rdd_idx = MT_RDD_IDX_BACKGROUND,
 		.disable_timer = disable_timer,
 	};
 
