@@ -2007,6 +2007,7 @@ static void mt7615_mcu_set_txpower_sku(struct mt7615_phy *phy, u8 *sku)
 	struct mt76_phy *mphy = phy->mt76;
 	struct ieee80211_hw *hw = mphy->hw;
 	struct mt76_power_limits limits;
+	struct mt76_power_path_limits limits_path;
 	s8 *limits_array = (s8 *)&limits;
 	int n_chains = hweight8(mphy->antenna_mask);
 	int tx_power = hw->conf.power_level * 2;
@@ -2069,7 +2070,7 @@ static void mt7615_mcu_set_txpower_sku(struct mt7615_phy *phy, u8 *sku)
 	tx_power = mt76_get_sar_power(mphy, mphy->chandef.chan, tx_power);
 	tx_power -= mt76_tx_power_path_delta(n_chains);
 	tx_power = mt76_get_rate_power_limits(mphy, mphy->chandef.chan,
-					      &limits, tx_power);
+					      &limits, &limits_path, tx_power);
 	mphy->txpower_cur = tx_power;
 
 	if (is_mt7663(mphy->dev)) {

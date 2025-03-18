@@ -3504,6 +3504,7 @@ mt7925_mcu_rate_txpower_band(struct mt76_phy *phy,
 		225, 227, 229, 233
 	};
 	struct mt76_power_limits *limits;
+	struct mt76_power_path_limits limits_path;
 	struct mt7925_sku_tlv *sku_tlbv;
 	const u8 *ch_list;
 
@@ -3583,6 +3584,7 @@ mt7925_mcu_rate_txpower_band(struct mt76_phy *phy,
 			sar_power = mt76_get_sar_power(phy, &chan, reg_power);
 
 			mt76_get_rate_power_limits(phy, &chan, limits,
+						   &limits_path,
 						   sar_power);
 
 			tx_power_tlv->last_msg = ch_list[idx] == last_ch;

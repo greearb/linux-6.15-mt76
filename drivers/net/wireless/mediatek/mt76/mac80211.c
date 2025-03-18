@@ -5,27 +5,7 @@
 #include <linux/sched.h>
 #include <linux/of.h>
 #include "mt76.h"
-
-#define CHAN2G(_idx, _freq) {			\
-	.band = NL80211_BAND_2GHZ,		\
-	.center_freq = (_freq),			\
-	.hw_value = (_idx),			\
-	.max_power = 30,			\
-}
-
-#define CHAN5G(_idx, _freq) {			\
-	.band = NL80211_BAND_5GHZ,		\
-	.center_freq = (_freq),			\
-	.hw_value = (_idx),			\
-	.max_power = 30,			\
-}
-
-#define CHAN6G(_idx, _freq) {			\
-	.band = NL80211_BAND_6GHZ,		\
-	.center_freq = (_freq),			\
-	.hw_value = (_idx),			\
-	.max_power = 30,			\
-}
+#include "trace.h"
 
 static const struct ieee80211_channel mt76_channels_2ghz[] = {
 	CHAN2G(1, 2412),
@@ -54,6 +34,15 @@ static const struct ieee80211_channel mt76_channels_5ghz[] = {
 	CHAN5G(56, 5280),
 	CHAN5G(60, 5300),
 	CHAN5G(64, 5320),
+
+	CHAN5G(68, 5340),
+	CHAN5G(72, 5360),
+	CHAN5G(76, 5380),
+	CHAN5G(80, 5400),
+	CHAN5G(84, 5420),
+	CHAN5G(88, 5440),
+	CHAN5G(92, 5460),
+	CHAN5G(96, 5480),
 
 	CHAN5G(100, 5500),
 	CHAN5G(104, 5520),
@@ -432,6 +421,8 @@ mt76_phy_init(struct mt76_phy *phy, struct ieee80211_hw *hw)
 	INIT_LIST_HEAD(&phy->tx_list);
 	spin_lock_init(&phy->tx_lock);
 	INIT_DELAYED_WORK(&phy->roc_work, mt76_roc_complete_work);
+	spin_lock_init(&phy->tx_dbg_stats.lock);
+	spin_lock_init(&phy->rx_dbg_stats.lock);
 
 	if ((void *)phy != hw->priv)
 		return 0;
@@ -683,6 +674,7 @@ mt76_alloc_device(struct device *pdev, unsigned int size,
 	spin_lock_init(&dev->cc_lock);
 	spin_lock_init(&dev->status_lock);
 	spin_lock_init(&dev->wed_lock);
+	spin_lock_init(&dev->tx_dbg_stats.lock);
 	mutex_init(&dev->mutex);
 	init_waitqueue_head(&dev->tx_wait);
 
@@ -856,6 +848,9 @@ static void mt76_rx_release_amsdu(struct mt76_phy *phy, enum mt76_rxq_id q)
 		}
 
 		if (ether_addr_equal(skb->data + offset, rfc1042_header)) {
+			spin_lock_bh(&phy->rx_dbg_stats.lock);
+			phy->rx_dbg_stats.rx_drop[MT_RX_DROP_RFC_PKT]++;
+			spin_unlock_bh(&phy->rx_dbg_stats.lock);
 			dev_kfree_skb(skb);
 			return;
 		}
@@ -893,11 +888,15 @@ void mt76_rx(struct mt76_dev *dev, enum mt76_rxq_id q, struct sk_buff *skb)
 
 	if (!test_bit(MT76_STATE_RUNNING, &phy->state)) {
 		dev_kfree_skb(skb);
+		spin_lock_bh(&phy->rx_dbg_stats.lock);
+		phy->rx_dbg_stats.rx_drop[MT_RX_DROP_STATE_ERR]++;
+		spin_unlock_bh(&phy->rx_dbg_stats.lock);
 		return;
 	}
 
 #ifdef CONFIG_NL80211_TESTMODE
-	if (phy->test.state == MT76_TM_STATE_RX_FRAMES) {
+	if (!(phy->test.flag & MT_TM_FW_RX_COUNT) &&
+	    phy->test.state == MT76_TM_STATE_RX_FRAMES) {
 		phy->test.rx_stats.packets[q]++;
 		if (status->flag & RX_FLAG_FAILED_FCS_CRC)
 			phy->test.rx_stats.fcs_error[q]++;
@@ -978,6 +977,7 @@ int __mt76_set_channel(struct mt76_phy *phy, struct cfg80211_chan_def *chandef,
 	struct mt76_dev *dev = phy->dev;
 	int timeout = HZ / 5;
 	int ret;
+	unsigned long was_scanning = ieee80211_get_scanning(phy->hw);
 
 	set_bit(MT76_RESET, &phy->state);
 
@@ -996,7 +996,7 @@ int __mt76_set_channel(struct mt76_phy *phy, struct cfg80211_chan_def *chandef,
 	if (!offchannel)
 		phy->main_chandef = *chandef;
 
-	if (chandef->chan != phy->main_chandef.chan)
+	if (chandef->chan != phy->main_chandef.chan || was_scanning)
 		memset(phy->chan_state, 0, sizeof(*phy->chan_state));
 
 	ret = dev->drv->set_channel(phy);
@@ -1185,6 +1185,7 @@ mt76_rx_convert(struct mt76_dev *dev, struct sk_buff *skb,
 {
 	struct ieee80211_rx_status *status = IEEE80211_SKB_RXCB(skb);
 	struct ieee80211_hdr *hdr = mt76_skb_get_hdr(skb);
+	struct mt76_phy *phy;
 	struct mt76_rx_status mstat;
 
 	mstat = *((struct mt76_rx_status *)skb->cb);
@@ -1232,6 +1233,11 @@ mt76_rx_convert(struct mt76_dev *dev, struct sk_buff *skb,
 
 	*sta = wcid_to_sta(mstat.wcid);
 	*hw = mt76_phy_hw(dev, mstat.phy_idx);
+
+	phy = mt76_dev_phy(dev, mstat.phy_idx);
+	spin_lock_bh(&phy->rx_dbg_stats.lock);
+	phy->rx_dbg_stats.rx_to_mac80211++;
+	spin_unlock_bh(&phy->rx_dbg_stats.lock);
 }
 
 static void
@@ -1465,6 +1471,7 @@ void mt76_rx_complete(struct mt76_dev *dev, struct sk_buff_head *frames,
 
 		mt76_check_ccmp_pn(skb);
 		skb_shinfo(skb)->frag_list = NULL;
+		trace_mt76_rx_complete(dev, (struct mt76_rx_status *)skb->cb, 0);
 		mt76_rx_convert(dev, skb, &hw, &sta);
 		ieee80211_rx_list(hw, sta, skb, &list);
 
@@ -1474,6 +1481,7 @@ void mt76_rx_complete(struct mt76_dev *dev, struct sk_buff_head *frames,
 			nskb = nskb->next;
 			skb->next = NULL;
 
+			trace_mt76_rx_complete(dev, (struct mt76_rx_status *)skb->cb, 1);
 			mt76_rx_convert(dev, skb, &hw, &sta);
 			ieee80211_rx_list(hw, sta, skb, &list);
 		}
@@ -1526,6 +1534,9 @@ mt76_sta_add(struct mt76_phy *phy, struct ieee80211_vif *vif,
 	if (ret)
 		goto out;
 
+	if (phy->hw->wiphy->flags & WIPHY_FLAG_SUPPORTS_MLO)
+		goto out;
+
 	for (i = 0; i < ARRAY_SIZE(sta->txq); i++) {
 		struct mt76_txq *mtxq;
 
@@ -1554,11 +1565,14 @@ void __mt76_sta_remove(struct mt76_phy *phy, struct ieee80211_vif *vif,
 	struct mt76_wcid *wcid = (struct mt76_wcid *)sta->drv_priv;
 	int i, idx = wcid->idx;
 
-	for (i = 0; i < ARRAY_SIZE(wcid->aggr); i++)
+	for (i = 0; !sta->valid_links && i < ARRAY_SIZE(wcid->aggr); i++)
 		mt76_rx_aggr_stop(dev, wcid, i);
 
 	if (dev->drv->sta_remove)
 		dev->drv->sta_remove(dev, vif, sta);
+
+	if (sta->valid_links)
+		return;
 
 	mt76_wcid_cleanup(dev, wcid);
 
@@ -1706,14 +1720,10 @@ EXPORT_SYMBOL_GPL(mt76_get_power_bound);
 int mt76_get_txpower(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		     u32 link_id, int *dbm)
 {
-	struct mt76_phy *phy = mt76_vif_phy(hw, vif);
-	int n_chains, delta;
+	struct mt76_phy *phy = hw->priv;
+	int n_chains = hweight16(phy->chainmask);
+	int delta = mt76_tx_power_path_delta(n_chains);
 
-	if (!phy)
-		return -EINVAL;
-
-	n_chains = hweight16(phy->chainmask);
-	delta = mt76_tx_power_path_delta(n_chains);
 	*dbm = DIV_ROUND_UP(phy->txpower_cur + delta, 2);
 
 	return 0;
@@ -1985,7 +1995,7 @@ enum mt76_dfs_state mt76_phy_dfs_state(struct mt76_phy *phy)
 		return MT_DFS_STATE_DISABLED;
 
 	if (!phy->radar_enabled) {
-		if ((hw->conf.flags & IEEE80211_CONF_MONITOR) &&
+		if (((hw->conf.flags & IEEE80211_CONF_MONITOR) || phy->monitor_vif) &&
 		    (phy->chandef.chan->flags & IEEE80211_CHAN_RADAR))
 			return MT_DFS_STATE_ACTIVE;
 
