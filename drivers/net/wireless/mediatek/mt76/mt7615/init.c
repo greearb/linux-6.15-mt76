@@ -277,6 +277,7 @@ void mt7615_init_txpower(struct mt7615_dev *dev,
 	u8 *eep = (u8 *)dev->mt76.eeprom.data;
 	enum nl80211_band band = sband->band;
 	struct mt76_power_limits limits;
+	struct mt76_power_path_limits limits_path;
 	u8 rate_val;
 
 	delta_idx = mt7615_eeprom_get_power_delta_index(dev, band);
@@ -306,7 +307,7 @@ void mt7615_init_txpower(struct mt7615_dev *dev,
 		}
 
 		target_power = mt76_get_rate_power_limits(&dev->mphy, chan,
-							  &limits,
+							  &limits, &limits_path,
 							  target_power);
 		target_power += delta;
 		target_power = DIV_ROUND_UP(target_power, 2);
