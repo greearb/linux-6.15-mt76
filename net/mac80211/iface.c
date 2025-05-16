@@ -955,6 +955,7 @@ out:
 	return ret;
 }
 
+#if 0
 static int ieee80211_netdev_fill_receive_path(struct net_device_path_ctx *ctx,
 					      struct net_device_path *path)
 {
@@ -976,6 +977,7 @@ static int ieee80211_netdev_fill_receive_path(struct net_device_path_ctx *ctx,
 
 	return ret;
 }
+#endif
 
 static const struct net_device_ops ieee80211_dataif_8023_ops = {
 	.ndo_open		= ieee80211_open,
@@ -985,7 +987,7 @@ static const struct net_device_ops ieee80211_dataif_8023_ops = {
 	.ndo_set_rx_mode	= ieee80211_set_multicast_list,
 	.ndo_set_mac_address	= ieee80211_change_mac,
 	.ndo_fill_forward_path	= ieee80211_netdev_fill_forward_path,
-	.ndo_fill_receive_path	= ieee80211_netdev_fill_receive_path,
+	//.ndo_fill_receive_path	= ieee80211_netdev_fill_receive_path,
 	.ndo_setup_tc		= ieee80211_netdev_setup_tc,
 };
 
