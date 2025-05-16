@@ -1677,12 +1677,6 @@ static int ieee80211_stop_ap(struct wiphy *wiphy, struct net_device *dev,
 
 	__sta_info_flush(sdata, true, link_id, NULL);
 
-	ieee80211_remove_link_keys(link, &keys);
-	if (!list_empty(&keys)) {
-		synchronize_net();
-		ieee80211_free_key_list(local, &keys);
-	}
-
 	link_conf->enable_beacon = false;
 	sdata->beacon_rate_set = false;
 	sdata->vif.cfg.ssid_len = 0;
@@ -2897,6 +2891,8 @@ static int ieee80211_scan(struct wiphy *wiphy,
 		 */
 		fallthrough;
 	case NL80211_IFTYPE_AP:
+		/* skip check */
+		break;
 		/*
 		 * If the scan has been forced (and the driver supports
 		 * forcing), don't care about being beaconing already.
