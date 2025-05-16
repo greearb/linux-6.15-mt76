@@ -16,11 +16,7 @@
 #include <linux/soc/mediatek/mtk_wed.h>
 #include <net/netlink.h>
 #include <net/mac80211.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6,6,0)
-#include <net/page_pool.h>
-#else
 #include <net/page_pool/helpers.h>
-#endif
 #include "util.h"
 #include "testmode.h"
 
@@ -892,8 +888,8 @@ struct mt76_dev {
 
 	struct mt76_mcu mcu;
 
-	struct net_device napi_dev;
-	struct net_device tx_napi_dev;
+	struct net_device *napi_dev;
+	struct net_device *tx_napi_dev;
 	spinlock_t rx_lock;
 	struct napi_struct napi[__MT_RXQ_MAX];
 	struct sk_buff_head rx_skb[__MT_RXQ_MAX];
@@ -1496,7 +1492,7 @@ int mt76_get_min_avg_rssi(struct mt76_dev *dev, u8 phy_idx);
 s8 mt76_get_power_bound(struct mt76_phy *phy, s8 txpower);
 
 int mt76_get_txpower(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		     int *dbm);
+		     u32 link_id, int *dbm);
 int mt76_init_sar_power(struct ieee80211_hw *hw,
 			const struct cfg80211_sar_specs *sar);
 int mt76_get_sar_power(struct mt76_phy *phy,
