@@ -664,8 +664,7 @@ static void mt7996_configure_filter(struct ieee80211_hw *hw,
 }
 
 static int
-mt7996_get_txpower(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		   unsigned int link_id, int *dbm)
+mt7996_get_txpower(struct ieee80211_hw *hw, struct ieee80211_vif *vif, int *dbm)
 {
 	struct mt7996_vif *mvif = (struct mt7996_vif *)vif->drv_priv;
 	struct mt7996_phy *phy = mt7996_vif_link_phy(&mvif->deflink);
@@ -689,7 +688,6 @@ mt7996_get_txpower(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 	return 0;
 }
-
 static u8
 mt7996_get_rates_table(struct mt7996_phy *phy, struct ieee80211_bss_conf *conf,
 		       bool beacon, bool mcast)
