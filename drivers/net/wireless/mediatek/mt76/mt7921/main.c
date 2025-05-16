@@ -364,7 +364,7 @@ void mt7921_roc_abort_sync(struct mt792x_dev *dev)
 {
 	struct mt792x_phy *phy = &dev->phy;
 
-	timer_delete_sync(&phy->roc_timer);
+	del_timer_sync(&phy->roc_timer);
 	cancel_work_sync(&phy->roc_work);
 	if (test_and_clear_bit(MT76_STATE_ROC, &phy->mt76->state))
 		ieee80211_iterate_interfaces(mt76_hw(dev),
@@ -395,7 +395,7 @@ static int mt7921_abort_roc(struct mt792x_phy *phy, struct mt792x_vif *vif)
 {
 	int err = 0;
 
-	timer_delete_sync(&phy->roc_timer);
+	del_timer_sync(&phy->roc_timer);
 	cancel_work_sync(&phy->roc_work);
 
 	mt792x_mutex_acquire(phy->dev);
@@ -1217,6 +1217,9 @@ static void mt7921_ipv6_addr_change(struct ieee80211_hw *hw,
 		},
 	};
 
+	if (!mvif->phy)
+		return;
+
 	read_lock_bh(&idev->lock);
 	list_for_each_entry(ifa, &idev->addr_list, if_list) {
 		if (ifa->flags & IFA_F_TENTATIVE)
@@ -1476,7 +1479,7 @@ static void mt7921_abort_channel_switch(struct ieee80211_hw *hw,
 {
 	struct mt792x_vif *mvif = (struct mt792x_vif *)vif->drv_priv;
 
-	timer_delete_sync(&mvif->csa_timer);
+	del_timer_sync(&mvif->csa_timer);
 	cancel_work_sync(&mvif->csa_work);
 }
 
