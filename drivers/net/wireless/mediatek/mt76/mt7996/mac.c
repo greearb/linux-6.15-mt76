@@ -1706,7 +1706,7 @@ __mt7996_get_pg_addr(struct mt7996_dev *dev)
 	return p;
 }
 
-struct mt7996_msdu_pg_addr *
+static struct mt7996_msdu_pg_addr *
 mt7996_get_pg_addr(struct mt7996_dev *dev)
 {
 	struct mt7996_msdu_pg_addr *p = __mt7996_get_pg_addr(dev);
@@ -2760,7 +2760,7 @@ void mt7996_mac_reset_work(struct work_struct *work)
 }
 
 /* firmware coredump */
-void mt7996_mac_fw_coredump(struct mt7996_dev *dev, u8 type)
+static void mt7996_mac_fw_coredump(struct mt7996_dev *dev, u8 type)
 {
 	const struct mt7996_mem_region *mem_region;
 	struct mt7996_crash_data *crash_data;
@@ -3814,7 +3814,7 @@ disconn:
 	ieee80211_connection_loss(vif);
 }
 
-void mt7996_sta_chsw_state_reset(struct mt7996_vif_link *mconf)
+static void mt7996_sta_chsw_state_reset(struct mt7996_vif_link *mconf)
 {
 	struct mt7996_dev *dev = mconf->phy->dev;
 	struct mt7996_vif *mvif = mconf->msta_link.sta->vif;

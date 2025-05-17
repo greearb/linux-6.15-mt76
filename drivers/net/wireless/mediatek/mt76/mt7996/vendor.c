@@ -269,7 +269,7 @@ error:
 	return -EINVAL;
 }
 
-void mt7996_set_wireless_rts_sigta(struct ieee80211_hw *hw, u8 value) {
+static void mt7996_set_wireless_rts_sigta(struct ieee80211_hw *hw, u8 value) {
 	struct mt7996_dev *dev = mt7996_hw_dev(hw);
 	struct mt7996_phy *phy = &dev->phy;
 

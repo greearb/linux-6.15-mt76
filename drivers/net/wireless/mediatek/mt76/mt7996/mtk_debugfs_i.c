@@ -71,8 +71,9 @@ static void mt7996_dump_bmac_mac_txp_info(struct seq_file *s, struct mt7996_dev 
 }
 
 //bmac dump hif txp
-void mt7996_dump_bmac_hif_txp_info(struct seq_file *s, struct mt7996_dev *dev,
-				   __le32 *txp, u32 hif_txp_ver)
+static void
+mt7996_dump_bmac_hif_txp_info(struct seq_file *s, struct mt7996_dev *dev,
+			      __le32 *txp, u32 hif_txp_ver)
 {
 	int i, j = 0;
 	u32 dw;

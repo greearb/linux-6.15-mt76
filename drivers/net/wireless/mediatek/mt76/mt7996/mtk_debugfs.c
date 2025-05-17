@@ -10,6 +10,7 @@
 #include "mtk_debug.h"
 #include "mtk_mcu.h"
 #include "coredump.h"
+#include <linux/vmalloc.h>
 
 #ifdef CONFIG_MTK_DEBUG
 
@@ -373,7 +374,7 @@ static int mt7996_dump_version(struct seq_file *s, void *data)
 }
 
 /* fw wm call trace info dump */
-void mt7996_show_lp_history(struct seq_file *s, u32 type)
+static void mt7996_show_lp_history(struct seq_file *s, u32 type)
 {
 	struct mt7996_dev *dev = dev_get_drvdata(s->private);
 	struct mt7996_crash_data *crash_data;
@@ -4395,8 +4396,9 @@ mt7996_rx_drop_show(struct seq_file *s, void *data)
 	struct mt76_queue *q[2];
 	int i = 0;
 
-	if (mtk_wed_device_active(&mdev->mmio.wed) &&
-	    mdev->mmio.wed.version == MTK_WED_HW_V3_1)
+	if (mtk_wed_device_active(&mdev->mmio.wed)
+	    /* TODO wed.version &&
+	       mdev->mmio.wed.version == MTK_WED_HW_V3_1*/)
 		q[0] = &mdev->q_rx[MT_RXQ_WED_RX_DATA];
 	else
 		q[0] = &mdev->q_rx[MT_RXQ_MAIN];

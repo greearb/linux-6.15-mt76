@@ -959,6 +959,8 @@ static void mt7996_rro_v3_hw_init(struct mt7996_dev *dev)
 		return;
 
 	if (mt76_wed_check_rx_cap(wed)) {
+/* TODO:  Needs some eth patches before it can compile. --Ben
+   Should not be needed on x86 anyway.
 		wed->wlan.ind_cmd.win_size = ffs(MT7996_RRO_WINDOW_MAX_LEN) - 6;
 		if (is_mt7996(&dev->mt76))
 			wed->wlan.ind_cmd.particular_sid = MT7996_RRO_MAX_SESSION;
@@ -971,6 +973,7 @@ static void mt7996_rro_v3_hw_init(struct mt7996_dev *dev)
 		mt76_wr(dev, MT_RRO_IND_CMD_SIGNATURE_BASE0, 0x15010e00);
 		mt76_set(dev, MT_RRO_IND_CMD_SIGNATURE_BASE1,
 			MT_RRO_IND_CMD_SIGNATURE_BASE1_EN);
+*/
 	} else {
 		mt76_wr(dev, MT_RRO_IND_CMD_SIGNATURE_BASE0, 0);
 		mt76_wr(dev, MT_RRO_IND_CMD_SIGNATURE_BASE1, 0);
@@ -1111,8 +1114,9 @@ static int mt7996_wed_rro_init(struct mt7996_dev *dev)
 			addr->signature = 0xff;
 			addr++;
 		}
-		if (mt76_wed_check_rx_cap(wed))
-			wed->wlan.ind_cmd.addr_elem_phys[i] = dev->wed_rro.addr_elem[i].phy_addr;
+		// TODO:  WED wlan
+		//if (mt76_wed_check_rx_cap(wed))
+		//	wed->wlan.ind_cmd.addr_elem_phys[i] = dev->wed_rro.addr_elem[i].phy_addr;
 	}
 
 	for (i = 0; i < MT7996_RRO_MSDU_PG_CR_CNT; i++) {

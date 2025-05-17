@@ -169,7 +169,7 @@ int mt7996_mcu_set_sr_enable(struct mt7996_phy *phy, u8 action, u64 val, bool se
 					 sizeof(req), false);
 }
 
-void mt7996_mcu_rx_sr_swsd(struct mt7996_dev *dev, struct sk_buff *skb)
+static void mt7996_mcu_rx_sr_swsd(struct mt7996_dev *dev, struct sk_buff *skb)
 {
 #define SR_SCENE_DETECTION_TIMER_PERIOD_MS 500
 	struct mt7996_mcu_sr_swsd_event *event;
@@ -205,7 +205,7 @@ void mt7996_mcu_rx_sr_swsd(struct mt7996_dev *dev, struct sk_buff *skb)
 		 le32_to_cpu(event->tlv[idx].obss_airtime_ratio) % 10);
 }
 
-void mt7996_mcu_rx_sr_hw_indicator(struct mt7996_dev *dev, struct sk_buff *skb)
+static void mt7996_mcu_rx_sr_hw_indicator(struct mt7996_dev *dev, struct sk_buff *skb)
 {
 	struct mt7996_mcu_sr_hw_ind_event *event;
 
@@ -1117,8 +1117,9 @@ int mt7996_mcu_set_bypass_smthint(struct mt7996_dev *dev, u8 band_idx, u8 val)
 				 true);
 }
 
-int mt7996_mcu_set_bsrp_ctrl(struct mt7996_dev *dev, u8 band_idx, u16 interval,
-			     u16 ru_alloc, u32 trig_type, u8 trig_flow, u8 ext_cmd)
+static int
+mt7996_mcu_set_bsrp_ctrl(struct mt7996_dev *dev, u8 band_idx, u16 interval,
+			 u16 ru_alloc, u32 trig_type, u8 trig_flow, u8 ext_cmd)
 {
 	struct {
 		u8 _rsv[4];

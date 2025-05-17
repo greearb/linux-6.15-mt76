@@ -745,7 +745,7 @@ static inline void __mt7996_stat_to_netdev(struct mt76_phy *mphy,
 			return;
 
 		dev_sw_netstats_tx_add(wdev->netdev, tx_packets, tx_bytes);
-		__dev_sw_netstats_rx_add(wdev->netdev, rx_packets, rx_bytes);
+		dev_sw_netstats_rx_add_p(wdev->netdev, rx_packets, rx_bytes);
 	}
 }
 
@@ -1085,7 +1085,7 @@ out:
 	return 0;
 }
 
-void
+static void
 mt7996_mcu_csi_report_event(struct mt7996_dev *dev, struct sk_buff *skb)
 {
 	struct mt7996_mcu_csi_event *event;
@@ -1298,9 +1298,9 @@ mt7996_mcu_wed_rro_event(struct mt7996_dev *dev, struct sk_buff *skb)
 	}
 }
 
-void
+static void
 mt7996_dump_pp_statistic_event(struct mt7996_dev *dev,
-			 struct mt7996_mcu_pp_alg_ctrl_event *event)
+			       struct mt7996_mcu_pp_alg_ctrl_event *event)
 {
 	u32 unit_time = le32_to_cpu(event->pp_timer_intv);
 
@@ -1532,6 +1532,34 @@ mt7996_mcu_bss_event(struct mt7996_dev *dev, struct sk_buff *skb)
 			le16_to_cpu(tlv->tag));
 		return;
 	}
+}
+
+static void
+mt7996_mcu_rx_thermal_notify(struct mt7996_dev *dev, struct sk_buff *skb)
+{
+#define THERMAL_NOTIFY_TAG 0x4
+#define THERMAL_NOTIFY 0x2
+	struct mt76_phy *mphy = &dev->mt76.phy;
+	struct mt7996_mcu_thermal_notify *n;
+	struct mt7996_phy *phy;
+
+	n = (struct mt7996_mcu_thermal_notify *)skb->data;
+
+	if (le16_to_cpu(n->tag) != THERMAL_NOTIFY_TAG)
+		return;
+
+	if (n->event_id != THERMAL_NOTIFY)
+		return;
+
+	if (n->band_idx > MT_BAND2)
+		return;
+
+	mphy = dev->mt76.phys[n->band_idx];
+	if (!mphy)
+		return;
+
+	phy = (struct mt7996_phy *)mphy->priv;
+	phy->throttle_state = n->duty_percent;
 }
 
 static void
@@ -5661,7 +5689,7 @@ static int mt7996_mcu_set_cal_free_data(struct mt7996_dev *dev)
 				     MCU_WM_UNI_CMD(EFUSE_CTRL), true);
 }
 
-int mt7996_mcu_set_eeprom_flash(struct mt7996_dev *dev)
+static int mt7996_mcu_set_eeprom_flash(struct mt7996_dev *dev)
 {
 #define MAX_PAGE_IDX_MASK	GENMASK(7, 5)
 #define PAGE_IDX_MASK		GENMASK(4, 2)
@@ -7306,7 +7334,7 @@ static int mt7996_afc_update_power_limit(struct mt7996_dev *dev,
 	return 0;
 }
 
-bool mt7996_is_psd_country(char *country)
+static bool mt7996_is_psd_country(char *country)
 {
 	char psd_country_list[][3] = {"US", "KR", "BR", "CL", "MY", ""};
 	int i;
@@ -7820,7 +7848,7 @@ int mt7996_mcu_set_tx_power_ctrl(struct mt7996_phy *phy, u8 power_ctrl_id, u8 da
 				 &req, sizeof(req), false);
 }
 
-int mt7996_mcu_set_scs_stats(struct mt7996_phy *phy)
+static int mt7996_mcu_set_scs_stats(struct mt7996_phy *phy)
 {
 	struct mt7996_scs_ctrl ctrl = phy->scs_ctrl;
 	struct {
@@ -7845,7 +7873,7 @@ int mt7996_mcu_set_scs_stats(struct mt7996_phy *phy)
 				 &req, sizeof(req), false);
 }
 
-void mt7996_sta_rssi_work(void *data, struct ieee80211_sta *sta)
+static void mt7996_sta_rssi_work(void *data, struct ieee80211_sta *sta)
 {
 	struct mt7996_sta *msta = (struct mt7996_sta *)sta->drv_priv;
 	struct mt7996_sta_link *msta_link;
@@ -8434,7 +8462,7 @@ static int mt7996_mcu_set_csi_active_mode(struct mt7996_phy *phy, u16 tag,
 				sizeof(req), false);
 }
 
-void mt7996_csi_wcid_bitmap_update(void *data, struct ieee80211_sta *sta)
+static void mt7996_csi_wcid_bitmap_update(void *data, struct ieee80211_sta *sta)
 {
 	struct mt7996_sta *msta = (struct mt7996_sta *)sta->drv_priv;
 	struct mt7996_phy *phy = msta->vif->deflink.phy;

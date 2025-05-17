@@ -1549,6 +1549,8 @@ int mt7996_mcu_mlo_agc(struct mt7996_dev *dev, const void *data, int len);
 int mt7996_mcu_set_sr_pp_en(struct mt7996_dev *dev, u8 enable);
 int mt7996_mcu_set_uba_en(struct mt7996_dev *dev, u8 enable);
 int mt7996_mcu_set_mru_probe_en(struct mt7996_phy *phy);
+#else
+static int mt7996_mcu_set_dup_wtbl(struct mt7996_dev *dev) { return -1; }
 #endif
 
 int mt7996_dma_rro_init(struct mt7996_dev *dev);

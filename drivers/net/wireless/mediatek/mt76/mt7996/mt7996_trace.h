@@ -15,7 +15,7 @@
 
 #define MAXNAME		32
 #define DEV_ENTRY	__array(char, wiphy_name, 32)
-#define DEV_ASSIGN(_w)	strlcpy(__entry->wiphy_name, wiphy_name(_w), MAXNAME)
+#define DEV_ASSIGN(_w)	strscpy(__entry->wiphy_name, wiphy_name(_w), MAXNAME)
 #define DEV_PR_FMT	"%s"
 #define DEV_PR_ARG	__entry->wiphy_name
 
@@ -134,7 +134,7 @@ TRACE_EVENT(mt7996_fill_rx_done,
 #endif
 
 #undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH ./mt7996
+#define TRACE_INCLUDE_PATH .
 #undef TRACE_INCLUDE_FILE
 #define TRACE_INCLUDE_FILE mt7996_trace
 

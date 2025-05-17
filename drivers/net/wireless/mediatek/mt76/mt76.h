@@ -2241,4 +2241,6 @@ mt76_vif_link_phy(struct mt76_vif_link *mlink)
 	return ctx->phy;
 }
 
+s8 mt76_get_power_bound(struct mt76_phy *phy, s8 txpower);
+
 #endif
